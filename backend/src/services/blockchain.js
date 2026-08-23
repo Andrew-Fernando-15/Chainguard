@@ -42,15 +42,29 @@ export async function getContract() {
 
 export async function addEvidenceOnChain(caseId, fileHash) {
   const c = await getContract();
-  if (!c) return null; // blockchain not deployed yet — caller should handle gracefully
+  if (!c) return null;
 
   const tx = await c.addEvidence(caseId, fileHash);
   const receipt = await tx.wait();
+
+  let evidenceId = null;
+  for (const log of receipt.logs) {
+    try {
+      const parsed = c.interface.parseLog(log);
+      if (parsed && parsed.name === 'EvidenceAdded') {
+        evidenceId = Number(parsed.args.evidenceId || parsed.args[0]);
+        break;
+      }
+    } catch (e) {
+      // ignore other logs
+    }
+  }
 
   return {
     txHash: receipt.hash,
     blockNumber: receipt.blockNumber,
     contractAddress: await c.getAddress(),
+    evidenceId,
   };
 }
 
@@ -58,4 +72,10 @@ export async function verifyEvidenceOnChain(evidenceId, currentHash) {
   const c = await getContract();
   if (!c) return null;
   return c.verifyEvidence(evidenceId, currentHash);
+}
+
+export async function getEvidenceInfoOnChain(evidenceId) {
+  const c = await getContract();
+  if (!c) return null;
+  return c.getEvidence(evidenceId);
 }

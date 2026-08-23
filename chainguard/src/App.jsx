@@ -12,6 +12,7 @@ import AIDetection from './pages/AIDetection';
 import BlockchainVerification from './pages/BlockchainVerification';
 import ChainOfCustody from './pages/ChainOfCustody';
 import Roles from './pages/Roles';
+import CaseDetail from './pages/CaseDetail';
 
 function PageTransition({ children }) {
   return (
@@ -37,6 +38,7 @@ function AnimatedRoutes() {
           <Route path="/dashboard" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
           <Route path="/upload" element={<ProtectedRoute><PageTransition><Upload /></PageTransition></ProtectedRoute>} />
           <Route path="/ai-detection" element={<ProtectedRoute><PageTransition><AIDetection /></PageTransition></ProtectedRoute>} />
+          <Route path="/case/:id" element={<ProtectedRoute><PageTransition><CaseDetail /></PageTransition></ProtectedRoute>} />
           <Route path="/verify" element={<ProtectedRoute><PageTransition><BlockchainVerification /></PageTransition></ProtectedRoute>} />
           <Route path="/custody" element={<ProtectedRoute><PageTransition><ChainOfCustody /></PageTransition></ProtectedRoute>} />
           <Route path="/roles" element={<ProtectedRoute><PageTransition><Roles /></PageTransition></ProtectedRoute>} />

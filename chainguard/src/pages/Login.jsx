@@ -8,7 +8,7 @@ import { loginUser, registerUser } from '../services/api';
 
 export default function Login() {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'police' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', position: 'Police', role: 'Investigating Officer' });
   const [submitting, setSubmitting] = useState(false);
 
   const { login } = useAuth();
@@ -27,7 +27,13 @@ export default function Login() {
         await registerUser(form);
         pushToast('Account created — logging you in...', 'success');
       }
-      const data = await loginUser({ email: form.email, password: form.password });
+      const data = await loginUser({ 
+        name: form.name, 
+        position: form.position, 
+        role: form.role, 
+        email: form.email, 
+        password: form.password 
+      });
       login(data.user, data.token);
       pushToast(`Welcome, ${data.user.name}`, 'success');
       navigate('/dashboard');
@@ -61,21 +67,44 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4" autoComplete="off">
-          {mode === 'register' && (
-            <div className="relative">
-              <FiUser className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40" />
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Full name"
-                required
-                autoComplete="off"
-                data-lpignore="true"
-                className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 focus:border-cyan/50"
-              />
-            </div>
-          )}
+          <div className="relative">
+            <FiUser className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40" />
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Full name"
+              required
+              autoComplete="off"
+              data-lpignore="true"
+              className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 focus:border-cyan/50"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <select
+              name="position"
+              value={form.position}
+              onChange={handleChange}
+              className="w-1/2 rounded-lg border border-white/10 bg-white/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50"
+            >
+              <option value="Police">Police</option>
+              <option value="Forensic">Forensic</option>
+              <option value="Judge">Judge</option>
+              <option value="CBI">CBI</option>
+            </select>
+
+            <select
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              className="w-1/2 rounded-lg border border-white/10 bg-white/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50"
+            >
+              <option value="Investigating Officer">Investigating Officer</option>
+              <option value="Normal Officer">Normal Officer</option>
+              <option value="N/A">N/A</option>
+            </select>
+          </div>
 
           <div className="relative">
             <FiMail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40" />
@@ -107,19 +136,6 @@ export default function Login() {
               className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 focus:border-cyan/50"
             />
           </div>
-
-          {mode === 'register' && (
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50"
-            >
-              <option value="police">Police / Investigator</option>
-              <option value="judge">Judge / Court</option>
-              <option value="admin">Admin</option>
-            </select>
-          )}
 
           <button
             type="submit"

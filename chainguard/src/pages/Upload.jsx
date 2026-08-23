@@ -51,7 +51,7 @@ export default function Upload() {
       // If the contract hasn't been deployed yet, chainInfo comes back null and
       // we fall back to the mock so the UI still has something to show.
       const result = await uploadEvidence(
-        { caseId: meta.caseId, fileName: file.name, fileHash: hash },
+        { caseId: meta.caseId, category: meta.category, fileName: file.name, fileHash: hash, file: file },
         token
       );
 

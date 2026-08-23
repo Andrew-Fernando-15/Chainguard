@@ -8,7 +8,8 @@ import { motion } from 'framer-motion';
 import { FiBell, FiCheckCircle, FiAlertTriangle, FiLoader } from 'react-icons/fi';
 import StatCard from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
-import { listEvidence } from '../services/api';
+import { listEvidence, listCases } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import {
   accessRequests, aiAlerts, notifications,
 } from '../data/dummyData';
@@ -51,7 +52,9 @@ function timeAgo(dateStr) {
 
 export default function Dashboard() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [evidence, setEvidence] = useState([]);
+  const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -60,10 +63,16 @@ export default function Dashboard() {
     async function load() {
       try {
         setLoading(true);
-        const items = await listEvidence(token);
-        if (!cancelled) setEvidence(items || []);
+        const [items, caseList] = await Promise.all([
+          listEvidence(token),
+          listCases(token)
+        ]);
+        if (!cancelled) {
+          setEvidence(items || []);
+          setCases(caseList || []);
+        }
       } catch (err) {
-        if (!cancelled) setError(err.response?.data?.error || 'Failed to load evidence from the server.');
+        if (!cancelled) setError(err.response?.data?.error || 'Failed to load data from the server.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -186,6 +195,25 @@ export default function Dashboard() {
         <>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {liveStats.map((s) => <StatCard key={s.id} {...s} />)}
+          </div>
+
+          <div className="mt-6 glass rounded-2xl p-6">
+            <h3 className="font-semibold text-lg">My Cases</h3>
+            {cases.length === 0 ? (
+              <p className="mt-4 text-sm text-frost/40">You are not allotted to any cases yet.</p>
+            ) : (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {cases.map(c => (
+                  <div key={c._id} className="rounded-xl border border-white/5 bg-white/5 p-4 hover:border-cyan/30 cursor-pointer transition-colors" onClick={() => navigate(`/case/${c._id}`)}>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-mono text-xs text-cyan/70">{c.caseId}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase ${STATUS_STYLE[c.status] || STATUS_STYLE.Pending}`}>{c.status}</span>
+                    </div>
+                    <h4 className="font-semibold text-frost/90">{c.name}</h4>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="mt-6 grid gap-5 lg:grid-cols-3">

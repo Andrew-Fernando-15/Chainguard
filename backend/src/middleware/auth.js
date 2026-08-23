@@ -25,3 +25,48 @@ export function requireRole(...roles) {
     next();
   };
 }
+
+import Case from '../models/Case.js';
+import User from '../models/User.js';
+
+export async function checkCaseAllotment(req, res, next) {
+  try {
+    const caseId = req.params.id || req.params.caseId || req.body.caseId || req.query.caseId;
+    if (!caseId) {
+      return res.status(400).json({ error: 'Case ID is required' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    if (user.position === 'CBI') {
+      return next(); // CBI can access any case
+    }
+
+    let caseDoc;
+    if (caseId.match(/^[0-9a-fA-F]{24}$/)) {
+      caseDoc = await Case.findById(caseId);
+    } else {
+      caseDoc = await Case.findOne({ caseId: caseId });
+    }
+
+    if (!caseDoc) {
+      return res.status(404).json({ error: 'Case not found in database' });
+    }
+
+    if (caseDoc.status === 'Closed' && user.position !== 'Judge' && user.position !== 'CBI') {
+      return res.status(403).json({ error: 'This case is closed. You no longer have access.' });
+    }
+
+    const isAllotted = user.allottedCases.some((id) => id.toString() === caseDoc._id.toString());
+    if (!isAllotted) {
+      return res.status(403).json({ error: 'You are not allotted to this case' });
+    }
+
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to verify case allotment', details: err.message });
+  }
+}

@@ -8,9 +8,9 @@ const router = express.Router();
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'name, email, and password are required' });
+    const { name, email, password, position, role } = req.body;
+    if (!name || !email || !password || !position) {
+      return res.status(400).json({ error: 'name, email, password, and position are required' });
     }
 
     const existing = await User.findOne({ email });
@@ -19,11 +19,11 @@ router.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword, role });
+    const user = await User.create({ name, email, password: hashedPassword, position, role: role || 'N/A' });
 
     res.status(201).json({
       message: 'User registered successfully',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, position: user.position, role: user.role },
     });
   } catch (err) {
     res.status(500).json({ error: 'Registration failed', details: err.message });
@@ -33,14 +33,18 @@ router.post('/register', async (req, res) => {
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: 'email and password are required' });
+    const { name, position, role, email, password } = req.body;
+    if (!name || !position || !email || !password) {
+      return res.status(400).json({ error: 'name, position, email and password are required' });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (user.name !== name || user.position !== position || user.role !== (role || 'N/A')) {
+      return res.status(401).json({ error: 'Invalid name, position, or role' });
     }
 
     const passwordMatches = await bcrypt.compare(password, user.password);
@@ -49,7 +53,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, position: user.position, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
@@ -57,7 +61,7 @@ router.post('/login', async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, position: user.position, role: user.role },
     });
   } catch (err) {
     res.status(500).json({ error: 'Login failed', details: err.message });
