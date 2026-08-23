@@ -1,0 +1,22 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: chainguard-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  ganache:
+    image: trufflesuite/ganache:latest
+    container_name: chainguard-ganache
+    restart: unless-stopped
+    ports:
+      - "8545:8545"
+    command: >
+      --wallet.deterministic
+      --chain.chainId 1337
+
+volumes:
+  mongo-data:
