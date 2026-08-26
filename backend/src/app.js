@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import evidenceRoutes from './routes/evidence.js';
 import caseRoutes from './routes/case.js';
+import aiRoutes from './routes/ai.js';
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/evidence', evidenceRoutes);
 app.use('/api/cases', caseRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Catch-all for unmatched routes
 app.use((req, res) => {

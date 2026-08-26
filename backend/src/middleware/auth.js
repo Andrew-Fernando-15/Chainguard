@@ -28,6 +28,7 @@ export function requireRole(...roles) {
 
 import Case from '../models/Case.js';
 import User from '../models/User.js';
+import { logAndAnalyze } from '../services/aiEngine.js';
 
 export async function checkCaseAllotment(req, res, next) {
   try {
@@ -57,11 +58,13 @@ export async function checkCaseAllotment(req, res, next) {
     }
 
     if (caseDoc.status === 'Closed' && user.position !== 'Judge' && user.position !== 'CBI') {
+      await logAndAnalyze(user._id, 'failed_access', { caseId: caseDoc.caseId, reason: 'Rule 10: Access after case is closed' });
       return res.status(403).json({ error: 'This case is closed. You no longer have access.' });
     }
 
     const isAllotted = user.allottedCases.some((id) => id.toString() === caseDoc._id.toString());
     if (!isAllotted) {
+      await logAndAnalyze(user._id, 'failed_access', { caseId: caseDoc.caseId, reason: 'Rule 5: Access to non-allotted case' });
       return res.status(403).json({ error: 'You are not allotted to this case' });
     }
 
@@ -70,3 +73,4 @@ export async function checkCaseAllotment(req, res, next) {
     res.status(500).json({ error: 'Failed to verify case allotment', details: err.message });
   }
 }
+

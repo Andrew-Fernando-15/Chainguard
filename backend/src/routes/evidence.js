@@ -8,6 +8,7 @@ import User from '../models/User.js';
 import { verifyToken, checkCaseAllotment } from '../middleware/auth.js';
 import { addEvidenceOnChain, verifyEvidenceOnChain, getEvidenceInfoOnChain } from '../services/blockchain.js';
 import { getEncryptStream, getDecryptStream } from '../utils/crypto.js';
+import { logAndAnalyze } from '../services/aiEngine.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/temp/' });
@@ -35,6 +36,7 @@ router.post('/upload', upload.single('file'), checkCaseAllotment, async (req, re
       ];
       if (!forensicCats.includes(category)) {
         if (req.file) fs.unlinkSync(req.file.path);
+        await logAndAnalyze(user._id, 'failed_access', { caseId, reason: 'Rule 9: Category not allowed for Position+Role' });
         return res.status(403).json({ error: 'Forensic users can only upload forensic category evidence' });
       }
     }
@@ -60,7 +62,16 @@ router.post('/upload', upload.single('file'), checkCaseAllotment, async (req, re
           fileHash,
           uploadedBy: req.user.id,
           filePath: finalFilePath,
+          fileSize: req.file.size,
           iv: ivHex
+        });
+
+        await logAndAnalyze(req.user.id, 'upload', {
+          caseId,
+          evidenceId: evidence._id,
+          fileName,
+          fileHash,
+          fileSize: req.file.size
         });
 
         let chainInfo = null;
@@ -143,11 +154,13 @@ router.get('/download/:id', async (req, res) => {
     if (user.position !== 'CBI') {
       const isAllotted = user.allottedCases.some(id => id.toString() === item.caseId.toString());
       if (!isAllotted) {
+        await logAndAnalyze(user._id, 'failed_access', { caseId: item.caseId, evidenceId: item._id, reason: 'Rule 5: Access to non-allotted case' });
         return res.status(403).json({ error: 'You are not allowed to access any data in this case' });
       }
     }
 
     if (user.position === 'Forensic') {
+      await logAndAnalyze(user._id, 'failed_access', { caseId: item.caseId, evidenceId: item._id, reason: 'Rule 9: Forensic users cannot download' });
       return res.status(403).json({ error: 'Forensic users are restricted to View only. Downloading is forbidden.' });
     }
 
@@ -157,6 +170,8 @@ router.get('/download/:id', async (req, res) => {
 
     res.setHeader('Content-Disposition', `attachment; filename="${item.fileName}"`);
     res.setHeader('Content-Type', 'application/octet-stream');
+
+    await logAndAnalyze(user._id, 'download', { caseId: item.caseId, evidenceId: item._id });
 
     const readStream = fs.createReadStream(item.filePath);
     const decryptStream = getDecryptStream(item.iv);
@@ -179,6 +194,7 @@ router.get('/view/:id', async (req, res) => {
     if (user.position !== 'CBI') {
       const isAllotted = user.allottedCases.some(id => id.toString() === item.caseId.toString());
       if (!isAllotted) {
+        await logAndAnalyze(user._id, 'failed_access', { caseId: item.caseId, evidenceId: item._id, reason: 'Rule 5: Access to non-allotted case' });
         return res.status(403).json({ error: 'You are not allowed to access any data in this case' });
       }
     }
@@ -198,6 +214,8 @@ router.get('/view/:id', async (req, res) => {
     if (item.fileName.toLowerCase().endsWith('.txt')) mimeType = 'text/plain';
 
     res.setHeader('Content-Type', mimeType);
+
+    await logAndAnalyze(user._id, 'view', { caseId: item.caseId, evidenceId: item._id });
 
     const readStream = fs.createReadStream(item.filePath);
     const decryptStream = getDecryptStream(item.iv);

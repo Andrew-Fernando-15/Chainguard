@@ -8,6 +8,7 @@ const evidenceSchema = new mongoose.Schema(
     fileHash: { type: String, required: true }, // SHA-256, computed in the frontend
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     filePath: { type: String, required: true },
+    fileSize: { type: Number, required: true }, // Size in bytes
     iv: { type: String, required: true },
     blockchainEvidenceId: { type: Number }, // The smart contract's uint256 evidenceId
     status: {
