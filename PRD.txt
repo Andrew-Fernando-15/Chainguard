@@ -1,0 +1,85 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+CHAINGUARD – AI-Assisted Blockchain-Based Evidence Management System
+Version 2.0 | 23 August 2026
+
+1. PROBLEM STATEMENT
+Traditional digital evidence systems use centralized storage and manual 
+chain-of-custody records. This makes evidence vulnerable to tampering, 
+unauthorized access, and poor traceability, reducing trust in court.
+
+2. TARGET USERS
+• Investigating Officers
+• Police Officers
+• Forensic Experts
+• Judges
+• CBI Officers
+
+3. GOALS
+• Tamper-proof evidence records using blockchain
+• Permanent and verifiable chain of custody
+• Strict access control based on Position + Role + Case assignment + Category
+• Detect suspicious activities with rule-based AI
+• No single user has unrestricted access to all evidence
+• Support case lifecycle: Pending → Active → Closed
+
+4. CORE FEATURES (MVP)
+1. Login with Name, Position, Role, Email, Password
+2. Show only allotted cases
+3. Fine-grained access control (Position + Role + Case + Category)
+4. Evidence upload (restricted roles only)
+5. SHA-256 hashing
+6. AES-256-GCM encryption of files
+7. Store hash + metadata + custody on Blockchain (Ganache)
+8. Evidence versioning (original never changes)
+9. Separate View and Download permissions
+10. Automatic access restriction when case is Closed
+11. 11 rule-based AI anomaly detection rules
+12. Permanent logging of all actions on blockchain
+
+5. MVP SCOPE
+• Web application only
+• Local Ethereum (Ganache)
+• Rule-based AI only
+• MongoDB + local encrypted file storage
+• Single master encryption key
+
+6. KEY USER STORIES
+• I can log in with Name + Position + Role + Email + Password
+• I only see cases allotted to me
+• Inside a case I only see evidence categories I am allowed to view
+• Investigating Officer / Police / Forensic can upload
+• Judge and CBI can view/download but cannot upload
+• When case is Closed, only Judge and CBI keep access
+• Suspicious activities are flagged by the 11 AI rules
+
+7. SUCCESS METRICS
+• Every uploaded evidence has an immutable blockchain record
+• Unauthorized access is blocked and logged
+• Original evidence hash never changes
+• All critical actions are permanently recorded
+
+8. ASSUMPTIONS
+• Users are pre-created (self-registration is limited)
+• Evidence exists only after successful upload
+• Local Ganache is acceptable for prototype
+
+9. RISKS
+• Local blockchain performance
+• Encryption key management
+• False positives in AI rules
+
+10. OUT OF SCOPE
+• Public blockchain
+• Mobile app
+• Real-time notifications
+• Advanced ML models
+• External police database integration
+
+11. ACCEPTANCE CRITERIA
+• Login works with 5 fields
+• Only allotted cases are visible
+• Access denied messages are clear and correct
+• Files are encrypted + hashed + recorded on blockchain
+• Original evidence cannot be modified
+• Case Closed correctly restricts access
+• All 11 AI rules work and log suspicious activity

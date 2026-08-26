@@ -1,0 +1,74 @@
+SOFTWARE REQUIREMENTS SPECIFICATION (SRS)
+CHAINGUARD
+Version 2.0 | 23 August 2026
+
+1. USER ROLES & PERMISSIONS
+
+Positions: Police, Forensic, Judge, CBI
+Roles: Investigating Officer, Normal Officer
+
+Permission Matrix:
+Position + Role                  | Upload | View          | Download | After Closed | Cross-Case
+--------------------------------|--------|---------------|----------|--------------|------------
+Police + Investigating Officer  | Yes    | Allowed cats  | Yes      | No           | No
+Police + Normal Officer         | Yes    | Limited       | Yes      | No           | No
+Forensic (any role)             | Yes*   | Forensic only | No       | No           | No
+Judge                           | No     | All           | Yes      | Yes          | No
+CBI                             | No     | All           | Yes      | Yes          | Yes (logged)
+
+* Forensic can upload only Forensic categories
+
+2. FUNCTIONAL REQUIREMENTS
+
+Authentication
+FR-01 Login fields: Name, Position, Role, Email, Password
+FR-02 Authenticate with Email + Password (bcrypt + JWT)
+FR-03 Load Position, Role, allotted cases after login
+
+Case Access
+FR-04 Show only allotted cases
+FR-05 Check allotment before opening case
+FR-06 If not allotted → “You are not allotted to this case”
+FR-07 If allotted but no permitted evidence → “You are not allowed to access any data in this case”
+
+Evidence
+FR-08 Only authorized roles can upload
+FR-09 On upload: Encrypt (AES-256-GCM) → SHA-256 → Store encrypted file → Save metadata → Write to blockchain
+FR-10 Evidence exists only if uploaded
+FR-11 Original evidence never modified
+FR-12 New versions are linked records with new hash
+
+View / Download
+FR-13 View = decrypt and show in browser
+FR-14 Download = allow file download
+FR-15 Forensic = View only
+
+Case Status
+FR-16 Status: Pending | Active | Closed
+FR-17 On Closed: Investigating/Police/Forensic lose access; Judge & CBI keep View+Download; no more uploads
+
+AI Anomaly Detection (11 Rules)
+1. Hash mismatch
+2. Abnormal file size change
+3. Delete + Recreate with different hash
+4. >5 failed access attempts in 10 min
+5. Access to non-allotted case
+6. Access between 12 AM – 5 AM
+7. Download >8 files in 20 min
+8. Same evidence opened >10 times in 1 hour
+9. Category not allowed for Position+Role
+10. Access after Closed (except Judge/CBI)
+11. Duplicate SHA-256 upload
+
+3. EVIDENCE CATEGORIES (20)
+Blood Sample, DNA Report, Fingerprint, Autopsy Report, Toxicology Report,
+Ballistics Report, Murder Weapon, Crime Scene Photos, Crime Scene Videos,
+Witness Statement, Victim Statement, Accused Statement, CCTV Footage,
+Mobile Phone Data, Call Detail Records, FIR Copy, Charge Sheet,
+Medical Report, Other Physical Evidence, Miscellaneous
+
+4. DATA REQUIREMENTS
+Users: name, position, role, email, password (hashed), allottedCases[]
+Cases: caseId, name, status, currentInCharge, previousInCharges[]
+Evidence: evidenceId, caseId, category, fileHash, encryptedFilePath, version, uploadedBy, blockchainTxHash
+Access Logs: userId, evidenceId, action, timestamp, suspiciousFlag, blockchainTxHash

@@ -1,0 +1,40 @@
+SYSTEM ARCHITECTURE DOCUMENT
+CHAINGUARD
+Version 2.0 | 23 August 2026
+
+1. TECH STACK
+Frontend          : React.js (Vite)
+Backend           : Node.js + Express.js
+Database          : MongoDB
+Blockchain        : Ethereum (Ganache) + Solidity + Hardhat
+Encryption        : AES-256-GCM (Node.js crypto)
+Hashing           : SHA-256
+Auth              : JWT + bcrypt
+AI                : Rule-based (Backend)
+
+2. HIGH-LEVEL ARCHITECTURE
+
+React Frontend
+      │
+      ▼
+Node.js + Express Backend
+      │
+      ├── MongoDB (Users, Cases, Evidence meta, Access Logs)
+      ├── Encrypted File Storage (local disk)
+      └── Blockchain (Ganache + EvidenceContract)
+
+3. KEY COMPONENTS
+• Authentication Service
+• Authorization Middleware (Position + Role + Case + Category)
+• Case Management Service
+• Evidence Service (Upload, Encrypt, Hash, Versioning)
+• AI Anomaly Engine (11 rules)
+• Blockchain Service (ethers.js)
+
+4. SECURITY
+• bcrypt passwords
+• JWT sessions
+• AES-256-GCM file encryption
+• SHA-256 integrity
+• Strict middleware on every sensitive route
+• All critical actions written to blockchain

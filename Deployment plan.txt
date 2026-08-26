@@ -1,0 +1,95 @@
+DEVELOPMENT & DEPLOYMENT PLAN
+CHAINGUARD
+Version 2.0 | 23 August 2026
+
+Current Status: Basic Auth + Hash storage + UI + basic Blockchain skeleton exist.
+
+────────────────────────────────────────────────────────
+STAGE 1 – Fix Authentication & Roles (Foundation)
+────────────────────────────────────────────────────────
+• Update User model: add Position, Role, allottedCases
+• Change Login form to: Name + Position + Role + Email + Password
+• Update register/login APIs and frontend
+• Remove open “admin” full access
+• Pre-create users instead of open registration (or restrict it)
+
+Goal: Login matches final design.
+
+────────────────────────────────────────────────────────
+STAGE 2 – Case Management & Access Control
+────────────────────────────────────────────────────────
+• Create Case model (caseId, name, status, currentInCharge, history)
+• APIs: list allotted cases, open case with permission checks
+• Authorization middleware:
+  - Is user allotted to this case?
+  - Does user have permission for any evidence in this case?
+• Frontend: show only allotted cases + proper denied messages
+
+Goal: No one can see cases or evidence they are not allowed to see.
+
+────────────────────────────────────────────────────────
+STAGE 3 – Real File Handling + Encryption
+────────────────────────────────────────────────────────
+• Accept actual file upload (multer)
+• Encrypt file with AES-256-GCM before saving
+• Store only encrypted file on disk
+• Save file path + hash + category in MongoDB
+• Implement evidence versioning
+
+Goal: Real encrypted evidence files exist in the system.
+
+────────────────────────────────────────────────────────
+STAGE 4 – View / Download + Case Closed Logic
+────────────────────────────────────────────────────────
+• Separate View and Download permissions
+• Forensic = View only
+• Implement Case Status change (Pending → Active → Closed)
+• On Closed: automatically revoke access for Investigating/Police/Forensic
+• Judge & CBI keep access
+
+Goal: Full permission matrix + case lifecycle working.
+
+────────────────────────────────────────────────────────
+STAGE 5 – AI Anomaly Detection (11 Rules)
+────────────────────────────────────────────────────────
+• Implement all 11 rules in backend
+• Log every access/upload/download
+• Mark suspicious activities
+• Connect AI Detection page to real data
+
+Goal: Real anomaly detection instead of dummy data.
+
+────────────────────────────────────────────────────────
+STAGE 6 – Strengthen Blockchain
+────────────────────────────────────────────────────────
+• Expand smart contract (or use events) for:
+  - Access logs
+  - Suspicious flags
+  - Ownership history
+• Ensure every critical action writes to blockchain
+• Update verification page to use real on-chain data
+
+Goal: Strong, verifiable chain of custody.
+
+────────────────────────────────────────────────────────
+STAGE 7 – Integration, Testing & Demo Polish
+────────────────────────────────────────────────────────
+• End-to-end testing of all flows
+• Fix bugs
+• Clean remaining dummy data
+• Prepare demo users and 2–3 sample cases
+• Final documentation and presentation
+
+Goal: Complete working prototype ready for evaluation.
+
+────────────────────────────────────────────────────────
+DEFINITION OF DONE (Final)
+────────────────────────────────────────────────────────
+• All FR-01 to FR-23 implemented
+• Permission matrix strictly enforced
+• Files encrypted and hashed
+• Blockchain records exist for critical actions
+• Case Closed logic works
+• All 11 AI rules active
+• Original evidence cannot be modified
+• System can be demonstrated end-to-end

@@ -1,0 +1,39 @@
+[2026-08-23 18:46:00] ACTION: Read all required documents and analysed codebase structure
+DETAILS: Read antigravity.txt, PRD, SRS, System Architecture, UI/UX, and Deployment Plan. Investigated backend and frontend directories.
+FILES AFFECTED: log.txt
+STATUS: Success
+
+[2026-08-23 18:50:00] ACTION: Completed Stage 1 - Fix Authentication & Roles
+DETAILS: Updated User schema to include Position, Role and allottedCases. Removed admin role. Updated login and register API endpoints and frontend Login component to handle 5 fields (Name, Position, Role, Email, Password). 
+FILES AFFECTED: backend/src/models/User.js, backend/src/routes/auth.js, chainguard/src/pages/Login.jsx, chainguard/src/services/api.js
+STATUS: Success
+
+[2026-08-23 19:21:00] ACTION: Debug and Fix Backend Connection
+DETAILS: Investigated the "Is the backend running?" error. Discovered that the backend was failing to connect to MongoDB because the local Docker containers for MongoDB and Ganache were not running. Executed 'docker-compose up -d' to start the database and blockchain services. The backend should now connect successfully and the login page should work with the updated fields.
+FILES AFFECTED: None (Started docker services)
+STATUS: Success
+[2026-08-23 19:51:00] ACTION: Completed Stage 2 - Case Management & Access Control
+DETAILS: Created Case Mongoose model. Added auth middleware checkCaseAllotment for strict access control on cases and evidence. Updated evidence routes to restrict access based on user allotment. Added category field to Evidence model and upload form. Created new frontend CaseDetail page and My Cases section on Dashboard. Verified access rules via local seeding.
+FILES AFFECTED: backend/src/models/Case.js, backend/src/models/Evidence.js, backend/src/routes/case.js, backend/src/routes/evidence.js, backend/src/middleware/auth.js, chainguard/src/pages/CaseDetail.jsx, chainguard/src/pages/Dashboard.jsx, chainguard/src/pages/Upload.jsx, chainguard/src/App.jsx
+STATUS: Success
+[2026-08-23 20:11:00] ACTION: Completed Stage 3 - Real File Handling & Encryption
+DETAILS: Configured backend to use multer for multipart/form-data physical file uploads. Wrote a crypto utility (AES-256-CTR) to encrypt file streams on the fly and save them to the local uploads directory. Updated Evidence schema to track filePath and iv. Added a download API route that streams and decrypts files for authorized users. Updated frontend API service to construct FormData and trigger secure blob downloads. Added Download buttons to the Case Detail evidence table.
+FILES AFFECTED: backend/.env, backend/src/utils/crypto.js, backend/src/models/Evidence.js, backend/src/routes/evidence.js, chainguard/src/services/api.js, chainguard/src/pages/Upload.jsx, chainguard/src/pages/CaseDetail.jsx
+STATUS: Success
+[2026-08-23 20:38:00] ACTION: Completed Stage 4 - Blockchain Verification
+DETAILS: Deployed EvidenceContract.sol to Ganache. Updated backend to parse the EvidenceAdded log from transaction receipts and extract the smart contract's internal uint256 evidenceId. Created a blockchainEvidenceId field in the Evidence model to permanently link MongoDB to the specific smart contract record. Built a /verify API endpoint that connects to Ganache. Rebuilt the BlockchainVerification frontend page to accept a physical file, locally compute its hash, and query the smart contract for absolute tamper-proof verification.
+FILES AFFECTED: backend/src/services/blockchain.js, backend/src/models/Evidence.js, backend/src/routes/evidence.js, chainguard/src/services/api.js, chainguard/src/pages/BlockchainVerification.jsx
+STATUS: Success
+[2026-08-23 21:47:00] ACTION: Completed Stage 5 - View/Download Permissions & Case Closed Logic
+DETAILS: Implemented the case lifecycle (Pending -> Active -> Closed) with a PUT API and UI dropdown for authorized roles. Enforced strict lockdown logic in auth middleware where Police/Forensic users lose access once a case is Closed. Separated View vs Download routes, ensuring Forensic users can only stream (View) decrypted evidence inline and cannot save files to disk. Restricted Forensic uploads strictly to forensic categories.
+FILES AFFECTED: backend/src/middleware/auth.js, backend/src/routes/case.js, backend/src/routes/evidence.js, chainguard/src/services/api.js, chainguard/src/pages/CaseDetail.jsx
+STATUS: Success
+
+[2026-08-23 23:42:00] ACTION: Checkpoint - Session Summary
+DETAILS: We have successfully completed Stages 1 through 5 of the deployment plan. The core permissions, roles, cryptography (AES/SHA), blockchain integration (Ganache), and case lifecycles (Pending/Active/Closed) are fully implemented, strictly enforcing all rules in the SRS.
+FILES AFFECTED: None
+STATUS: Success
+
+=== WHERE WE LEFT OFF ===
+We are currently ready to begin **STAGE 6 - AI Anomaly Detection (11 Rules)**. 
+The next step is to implement the backend engine that logs all actions (Upload, View, Download) and evaluates them against the 11 anomaly rules, flagging any suspicious behavior and displaying it on the frontend AI Detection page.

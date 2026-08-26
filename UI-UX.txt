@@ -1,0 +1,29 @@
+UI/UX DOCUMENT
+CHAINGUARD
+Version 2.0 | 23 August 2026
+
+1. MAIN USER JOURNEY
+Landing → Login → Case List → Open Case → View/Download Allowed Evidence
+                → Upload Evidence (if permitted)
+                → AI Detection / Chain of Custody / Verification pages
+
+2. KEY SCREENS
+• Landing Page (already good)
+• Login / Register Page (must be updated to 5 fields)
+• Dashboard (show only allotted cases + real stats)
+• Case Detail Page (only allowed evidence)
+• Upload Page (already partially working)
+• Chain of Custody Page
+• Blockchain Verification Page
+• AI Detection Page (currently dummy – must connect to real rules)
+
+3. ACCESS FEEDBACK
+• “You are not allotted to this case”
+• “You are not allowed to access any data in this case”
+• Clear success / error toasts
+
+4. DESIGN PRINCIPLES
+• Modern dark theme (already present)
+• Clear hierarchy
+• Strong visual feedback for denied access
+• Mobile-friendly but desktop-first for prototype

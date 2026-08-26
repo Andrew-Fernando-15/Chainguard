@@ -1,0 +1,104 @@
+# ANTIGRAVITY MASTER INSTRUCTION – CHAINGUARD PROJECT
+
+You are now operating on the CHAINGUARD project.
+
+## MANDATORY FIRST ACTIONS
+1. Read this entire file (antigravity.txt) carefully.
+2. Read all 5 documents that are present in this folder:
+   - PRD
+   - SRS
+   - Architecture
+   - UI/UX
+   - Development Plan (Staged)
+3. Understand the current codebase that is already present in this folder.
+4. Create or open a file named `log.txt` in the root of the project.
+5. From this moment, you MUST update `log.txt` after every meaningful action.
+
+### log.txt Format (STRICT)
+Every entry must follow this exact format:
+
+[YYYY-MM-DD HH:MM:SS] ACTION: Short description of what you did
+DETAILS: Simple, clear, AI-readable explanation of changes made
+FILES AFFECTED: List of files created/modified/deleted
+STATUS: Success / Partial / Failed
+
+Write in plain, simple English. No fluff. Be precise so that another AI can later read the log and understand exactly what happened.
+
+--------------------------------------------------
+
+## PROJECT GOAL
+Transform the current CHAINGUARD codebase into a complete, working prototype that fully matches the requirements defined in the 5 documents (PRD, SRS, Architecture, UI/UX, and the Staged Development Plan).
+
+You must follow the **Staged Development Plan** strictly.
+
+Do NOT jump stages.
+Do NOT invent new features outside the documents.
+Do NOT remove working features unless the documents require it.
+Do NOT use assumptions. Only implement what is clearly written in the documents.
+
+--------------------------------------------------
+
+## CURRENT STATE (Summary)
+- Basic Auth (email + password + JWT) exists
+- Evidence hash can be saved to MongoDB
+- Basic smart contract exists
+- Frontend UI is partially built
+- Most of the advanced access control, encryption, case management, AI rules, and proper roles are MISSING
+
+--------------------------------------------------
+
+## YOUR EXECUTION RULES
+
+1. Work stage by stage exactly as defined in the Development Plan:
+   - Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6 → Stage 7
+
+2. After finishing each stage:
+   - Update log.txt
+   - Clearly state that the stage is completed
+   - List what was achieved
+
+3. Before starting any new stage, re-read the relevant parts of the SRS and Development Plan.
+
+4. When modifying code:
+   - Prefer improving existing files over creating unnecessary new ones
+   - Keep the existing good UI
+   - Maintain compatibility with the current folder structure (backend /, blockchain /, chainguard /)
+
+5. Security & Access Control are the highest priority.
+   The final system must enforce:
+   - Position + Role
+   - Case allotment
+   - Evidence category permissions
+   - View vs Download rules
+   - Case Closed behaviour
+
+6. Evidence files must be:
+   - Actually uploaded
+   - Encrypted with AES-256-GCM
+   - Hashed with SHA-256
+   - Recorded on the blockchain
+
+7. Implement all 11 AI anomaly detection rules in the backend.
+
+8. Never give any user full unrestricted access to all evidence.
+
+--------------------------------------------------
+
+## COMMUNICATION STYLE WITH ME
+- Be direct and technical
+- When you finish a stage, summarize what was done
+- If something is blocked or unclear, stop and ask me instead of guessing
+- Always keep log.txt updated
+
+--------------------------------------------------
+
+## START COMMAND
+Begin with **Stage 1** of the Development Plan.
+
+First:
+1. Confirm that you have read all 5 documents
+2. Confirm that you understand the current codebase
+3. Create/update log.txt with the first entry
+4. Then start implementing Stage 1
+
+Acknowledge this instruction and begin.
