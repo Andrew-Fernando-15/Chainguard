@@ -39,7 +39,7 @@ export default function ProcessTimeline() {
             <div className="glass flex-1 rounded-xl p-4">
               <p className="text-xs font-mono text-cyan/70">STEP {String(i + 1).padStart(2, '0')}</p>
               <h4 className="mt-1 font-semibold">{s.title}</h4>
-              <p className="mt-1 text-sm text-frost/55">{s.desc}</p>
+              <p className="mt-1 text-sm text-frost/55 light:text-navy/55">{s.desc}</p>
             </div>
           </motion.div>
         ))}

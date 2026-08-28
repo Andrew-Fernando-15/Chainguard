@@ -79,7 +79,7 @@ export default function Upload() {
     <div className="mx-auto max-w-4xl px-5 py-12 lg:px-8">
       <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">Intake</p>
       <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">Upload Evidence</h1>
-      <p className="mt-1 text-sm text-frost/50">Files are hashed locally in your browser before anything is stored.</p>
+      <p className="mt-1 text-sm text-frost/50 light:text-navy/50">Files are hashed locally in your browser before anything is stored.</p>
 
       {!file ? (
         <div
@@ -88,12 +88,12 @@ export default function Upload() {
           onDrop={onDrop}
           onClick={() => inputRef.current?.click()}
           className={`mt-8 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-16 text-center transition-colors ${
-            dragOver ? 'border-cyan bg-cyan/5' : 'border-white/15 hover:border-white/25'
+            dragOver ? 'border-cyan bg-cyan/5' : 'border-white/15 light:border-navy/15 hover:border-white/25 light:border-navy/25'
           }`}
         >
           <FiUploadCloud className="text-4xl text-cyan" />
           <p className="mt-4 font-medium">Drag & drop a file here, or click to browse</p>
-          <p className="mt-1 text-sm text-frost/40">Supports video, image, audio, and document evidence</p>
+          <p className="mt-1 text-sm text-frost/40 light:text-navy/40">Supports video, image, audio, and document evidence</p>
           <input ref={inputRef} type="file" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
         </div>
       ) : (
@@ -104,42 +104,42 @@ export default function Upload() {
                 <FiFile className="text-2xl text-cyan" />
                 <div>
                   <p className="font-medium">{file.name}</p>
-                  <p className="text-xs text-frost/40">{(file.size / 1024).toFixed(1)} KB</p>
+                  <p className="text-xs text-frost/40 light:text-navy/40">{(file.size / 1024).toFixed(1)} KB</p>
                 </div>
               </div>
-              <button onClick={reset} aria-label="Remove file" className="rounded-lg p-2 text-frost/40 hover:bg-white/5 hover:text-frost">
+              <button onClick={reset} aria-label="Remove file" className="rounded-lg p-2 text-frost/40 light:text-navy/40 hover:bg-white/5 light:bg-navy/5 hover:text-frost light:text-navy">
                 <FiX />
               </button>
             </div>
 
             <div className="mt-5">
-              <div className="flex justify-between text-xs text-frost/50">
+              <div className="flex justify-between text-xs text-frost/50 light:text-navy/50">
                 <span className="flex items-center gap-1.5"><FiHash /> Generating SHA-256 hash</span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5 light:bg-navy/5">
                 <div className="h-full rounded-full bg-gradient-to-r from-blue to-cyan transition-[width]" style={{ width: `${progress}%` }} />
               </div>
             </div>
 
             <AnimatePresence>
               {hash && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 rounded-xl bg-white/5 p-3">
-                  <p className="text-xs text-frost/40">SHA-256 Hash</p>
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 rounded-xl bg-white/5 light:bg-navy/5 p-3">
+                  <p className="text-xs text-frost/40 light:text-navy/40">SHA-256 Hash</p>
                   <p className="mt-1 break-all font-mono text-xs text-cyan">{hash}</p>
                 </motion.div>
               )}
             </AnimatePresence>
 
             <div className="mt-4 flex items-center gap-2 text-sm">
-              <FiLink className={STAGES.indexOf(stage) >= 3 ? 'text-green' : 'text-frost/30'} />
-              <span className={STAGES.indexOf(stage) >= 3 ? 'text-green' : 'text-frost/40'}>
+              <FiLink className={STAGES.indexOf(stage) >= 3 ? 'text-green' : 'text-frost/30 light:text-navy/30'} />
+              <span className={STAGES.indexOf(stage) >= 3 ? 'text-green' : 'text-frost/40 light:text-navy/40'}>
                 {stage === 'done' ? 'Committed to blockchain' : stage === 'chaining' ? 'Submitting to blockchain...' : 'Awaiting blockchain submission'}
               </span>
             </div>
 
             {chainInfo && (
-              <div className="mt-3 space-y-1 rounded-xl bg-white/5 p-3 font-mono text-xs text-frost/60">
+              <div className="mt-3 space-y-1 rounded-xl bg-white/5 light:bg-navy/5 p-3 font-mono text-xs text-frost/60 light:text-navy/60">
                 <p>Tx Hash: <span className="text-cyan">{chainInfo.txHash}</span></p>
                 <p>Contract: <span className="text-cyan">{chainInfo.contract}</span></p>
                 <p>Block: <span className="text-cyan">#{chainInfo.block}</span></p>
@@ -154,37 +154,37 @@ export default function Upload() {
             <h3 className="font-semibold">Evidence Metadata</h3>
             <div className="mt-4 space-y-3">
               <div>
-                <label className="text-xs text-frost/50">Case ID</label>
+                <label className="text-xs text-frost/50 light:text-navy/50">Case ID</label>
                 <input
                   required
                   value={meta.caseId}
                   onChange={(e) => setMeta({ ...meta, caseId: e.target.value })}
                   placeholder="CASE-2026-0417"
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-cyan/50"
+                  className="mt-1 w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 px-3 py-2 text-sm outline-none focus:border-cyan/50"
                 />
               </div>
               <div>
-                <label className="text-xs text-frost/50">Category</label>
+                <label className="text-xs text-frost/50 light:text-navy/50">Category</label>
                 <select
                   value={meta.category}
                   onChange={(e) => setMeta({ ...meta, category: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-cyan/50"
+                  className="mt-1 w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 px-3 py-2 text-sm outline-none focus:border-cyan/50 text-frost light:text-navy"
                 >
-                  <option>Video</option>
-                  <option>Image</option>
-                  <option>Audio</option>
-                  <option>Document</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy">Video</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy">Image</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy">Audio</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy">Document</option>
                 </select>
               </div>
               <div>
-                <label className="text-xs text-frost/50">Description</label>
+                <label className="text-xs text-frost/50 light:text-navy/50">Description</label>
                 <textarea
                   required
                   rows={3}
                   value={meta.description}
                   onChange={(e) => setMeta({ ...meta, description: e.target.value })}
                   placeholder="Brief context for this piece of evidence"
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-cyan/50"
+                  className="mt-1 w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 px-3 py-2 text-sm outline-none focus:border-cyan/50"
                 />
               </div>
             </div>

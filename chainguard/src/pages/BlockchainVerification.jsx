@@ -29,18 +29,18 @@ export default function BlockchainVerification() {
     <div className="mx-auto max-w-3xl px-5 py-12 lg:px-8">
       <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">Verify</p>
       <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">Blockchain Verification</h1>
-      <p className="mt-1 text-sm text-frost/50">Confirm a piece of evidence hasn't been altered by comparing the database record against the blockchain.</p>
+      <p className="mt-1 text-sm text-frost/50 light:text-navy/50">Confirm a piece of evidence hasn't been altered by comparing the database record against the blockchain.</p>
 
       <form onSubmit={handleVerify} className="mt-8 space-y-6">
         <div className="glass flex gap-3 rounded-2xl p-3">
           <div className="relative flex-1">
-            <FiSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-frost/40" />
+            <FiSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />
             <input
               required
               value={evidenceDbId}
               onChange={(e) => setEvidenceDbId(e.target.value)}
               placeholder="Enter Database Evidence ID (e.g. 64f1...)"
-              className="w-full rounded-xl bg-white/5 py-3 pl-11 pr-4 text-sm outline-none focus:ring-1 focus:ring-cyan/50"
+              className="w-full rounded-xl bg-white/5 light:bg-navy/5 py-3 pl-11 pr-4 text-sm outline-none focus:ring-1 focus:ring-cyan/50"
             />
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function BlockchainVerification() {
                   <FiCheckCircle className="text-2xl text-green" />
                   <div>
                     <p className="font-semibold text-green">Hash Match Confirmed</p>
-                    <p className="text-xs text-frost/50">This evidence is intact and unaltered on Ganache.</p>
+                    <p className="text-xs text-frost/50 light:text-navy/50">This evidence is intact and unaltered on Ganache.</p>
                   </div>
                 </>
               ) : (
@@ -72,13 +72,13 @@ export default function BlockchainVerification() {
                   <FiXCircle className="text-2xl text-red-400" />
                   <div>
                     <p className="font-semibold text-red-400">Hash Mismatch Detected</p>
-                    <p className="text-xs text-frost/50">This physical file does not match the smart contract record.</p>
+                    <p className="text-xs text-frost/50 light:text-navy/50">This physical file does not match the smart contract record.</p>
                   </div>
                 </>
               )}
             </div>
 
-            <div className="mt-5 space-y-3 divide-y divide-white/5 font-mono text-xs">
+            <div className="mt-5 space-y-3 divide-y divide-white/5 light:divide-navy/5 font-mono text-xs">
               <DetailRow label="Original Hash (Blockchain)" value={result.originalHash} />
               <DetailRow label="Current Hash (Local)" value={result.currentHash} />
               <DetailRow label="Transaction Hash" value={result.txHash} />
@@ -95,7 +95,7 @@ export default function BlockchainVerification() {
 function DetailRow({ label, value }) {
   return (
     <div className="flex flex-col gap-1 pt-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
-      <span className="font-sans text-frost/40">{label}</span>
+      <span className="font-sans text-frost/40 light:text-navy/40">{label}</span>
       <span className="break-all text-cyan">{value}</span>
     </div>
   );

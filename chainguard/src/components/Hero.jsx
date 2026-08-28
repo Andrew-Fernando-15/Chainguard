@@ -37,22 +37,22 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-cyan"
+          className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 px-4 py-1.5 text-xs text-cyan"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-green" />
-          Final Year Engineering Project · Live Chain Status: Synced
+          Third Year Engineering Project · Live Chain Status: Synced
         </motion.div>
 
         <h1 className="font-mono text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
           <span className="text-gradient">{HEADLINE.slice(0, revealed)}</span>
-          <span className="text-frost/25">{scramble}</span>
+          <span className="text-frost/25 light:text-navy/25">{scramble}</span>
         </h1>
 
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="mx-auto mt-6 max-w-2xl text-base text-frost/60 sm:text-lg"
+          className="mx-auto mt-6 max-w-2xl text-base text-frost/60 light:text-navy/60 sm:text-lg"
         >
           ChainGuard fuses Ethereum smart contracts, SHA-256 fingerprinting, and rule-based
           anomaly detection into one tamper-proof chain of custody — from the evidence locker to
@@ -74,7 +74,7 @@ export default function Hero() {
           </Link>
           <Link
             to="/verify"
-            className="glass flex items-center gap-2 rounded-xl px-6 py-3 font-medium text-frost/80 transition-colors hover:text-frost"
+            className="glass flex items-center gap-2 rounded-xl px-6 py-3 font-medium text-frost/80 light:text-navy/80 transition-colors hover:text-frost light:text-navy"
           >
             <FiPlayCircle /> Live Demo
           </Link>

@@ -60,7 +60,7 @@ export default function Login() {
             <h1 className="text-lg font-semibold">
               {mode === 'login' ? 'Sign in to ChainGuard' : 'Create an account'}
             </h1>
-            <p className="text-xs text-frost/50">
+            <p className="text-xs text-frost/50 light:text-navy/50">
               {mode === 'login' ? 'Access the evidence dashboard' : 'Register as an investigator'}
             </p>
           </div>
@@ -68,7 +68,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4" autoComplete="off">
           <div className="relative">
-            <FiUser className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40" />
+            <FiUser className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />
             <input
               name="name"
               value={form.name}
@@ -77,7 +77,7 @@ export default function Login() {
               required
               autoComplete="off"
               data-lpignore="true"
-              className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 focus:border-cyan/50"
+              className="w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 light:text-navy/30 focus:border-cyan/50"
             />
           </div>
 
@@ -86,28 +86,30 @@ export default function Login() {
               name="position"
               value={form.position}
               onChange={handleChange}
-              className="w-1/2 rounded-lg border border-white/10 bg-white/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50"
+              className="w-1/2 rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50 text-frost light:text-navy"
             >
-              <option value="Police">Police</option>
-              <option value="Forensic">Forensic</option>
-              <option value="Judge">Judge</option>
-              <option value="CBI">CBI</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Police">Police</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Forensic">Forensic</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Judge">Judge</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="CBI">CBI</option>
             </select>
 
             <select
               name="role"
               value={form.role}
               onChange={handleChange}
-              className="w-1/2 rounded-lg border border-white/10 bg-white/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50"
+              className="w-1/2 rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50 text-frost light:text-navy"
             >
-              <option value="Investigating Officer">Investigating Officer</option>
-              <option value="Normal Officer">Normal Officer</option>
-              <option value="N/A">N/A</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Investigating Officer">Investigating Officer</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Normal Officer">Normal Officer</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Judge">Judge</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="CBI">CBI</option>
+              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="N/A">N/A</option>
             </select>
           </div>
 
           <div className="relative">
-            <FiMail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40" />
+            <FiMail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />
             <input
               type="email"
               name="email"
@@ -117,12 +119,12 @@ export default function Login() {
               required
               autoComplete="off"
               data-lpignore="true"
-              className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 focus:border-cyan/50"
+              className="w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 light:text-navy/30 focus:border-cyan/50"
             />
           </div>
 
           <div className="relative">
-            <FiLock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40" />
+            <FiLock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />
             <input
               type="password"
               name="password"
@@ -133,7 +135,7 @@ export default function Login() {
               minLength={6}
               autoComplete="new-password"
               data-lpignore="true"
-              className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 focus:border-cyan/50"
+              className="w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 light:text-navy/30 focus:border-cyan/50"
             />
           </div>
 
@@ -146,7 +148,7 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-frost/50">
+        <p className="mt-5 text-center text-sm text-frost/50 light:text-navy/50">
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <button
             onClick={() => setMode(mode === 'login' ? 'register' : 'login')}

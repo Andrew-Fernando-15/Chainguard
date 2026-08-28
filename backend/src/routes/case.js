@@ -13,9 +13,9 @@ router.use(verifyToken);
 router.get('/', async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate('allottedCases');
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(401).json({ error: 'User not found' });
 
-    if (user.position === 'CBI') {
+    if (user.position === 'CBI' || user.position === 'Judge') {
       const allCases = await Case.find();
       return res.json(allCases);
     }

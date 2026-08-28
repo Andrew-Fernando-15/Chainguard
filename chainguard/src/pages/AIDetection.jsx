@@ -17,7 +17,7 @@ export default function AIDetection() {
     <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8">
       <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">Machine Learning</p>
       <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">AI Anomaly Detection</h1>
-      <p className="mt-1 text-sm text-frost/50">Rule-based checks and a lightweight classifier scan every action in real time.</p>
+      <p className="mt-1 text-sm text-frost/50 light:text-navy/50">Rule-based checks and a lightweight classifier scan every action in real time.</p>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-3">
         {aiCases.map((c, i) => (
@@ -32,11 +32,11 @@ export default function AIDetection() {
               <span className="font-mono text-xs text-cyan/70">{c.id}</span>
               <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${riskColor(c.risk)}`}>Risk {c.risk}</span>
             </div>
-            <div className="mt-3 flex items-center gap-2 text-sm text-frost/70">
+            <div className="mt-3 flex items-center gap-2 text-sm text-frost/70 light:text-navy/70">
               <span className="text-lg text-cyan">{RISK_ICON[c.issue]}</span>
               {c.issue}
             </div>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/5">
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/5 light:bg-navy/5">
               <div className={`h-full rounded-full ${c.risk >= 85 ? 'bg-red-400' : c.risk >= 60 ? 'bg-orange-400' : 'bg-cyan'}`} style={{ width: `${c.risk}%` }} />
             </div>
           </motion.div>
@@ -46,7 +46,7 @@ export default function AIDetection() {
       <div className="mt-8 grid gap-5 lg:grid-cols-3">
         <div className="glass rounded-2xl p-6 lg:col-span-2">
           <h3 className="font-semibold">Access Heat Map</h3>
-          <p className="mt-1 text-xs text-frost/40">Login & access density across the week, by hour</p>
+          <p className="mt-1 text-xs text-frost/40 light:text-navy/40">Login & access density across the week, by hour</p>
           <div className="mt-4 grid grid-cols-24 gap-[3px]" style={{ gridTemplateColumns: 'repeat(24, minmax(0,1fr))' }}>
             {HEAT.map((v, i) => (
               <div
@@ -57,7 +57,7 @@ export default function AIDetection() {
               />
             ))}
           </div>
-          <div className="mt-3 flex justify-between text-[10px] text-frost/30">
+          <div className="mt-3 flex justify-between text-[10px] text-frost/30 light:text-navy/30">
             <span>Mon 00:00</span><span>Sun 23:00</span>
           </div>
         </div>
@@ -70,7 +70,7 @@ export default function AIDetection() {
             <Row label="Verdict" value="Anomalous" tone="text-red-400" />
             <Row label="Confidence" value="94.2%" tone="text-cyan" />
           </div>
-          <p className="mt-4 rounded-lg bg-white/5 p-3 text-xs text-frost/50">
+          <p className="mt-4 rounded-lg bg-white/5 light:bg-navy/5 p-3 text-xs text-frost/50 light:text-navy/50">
             A hash mismatch was found on re-verification — the file's on-chain fingerprint no longer
             matches the stored copy. Flagged for forensic review.
           </p>
@@ -80,10 +80,10 @@ export default function AIDetection() {
   );
 }
 
-function Row({ label, value, tone = 'text-frost/80' }) {
+function Row({ label, value, tone = 'text-frost/80 light:text-navy/80' }) {
   return (
-    <div className="flex justify-between border-b border-white/5 pb-2">
-      <span className="text-frost/40">{label}</span>
+    <div className="flex justify-between border-b border-white/5 light:border-navy/5 pb-2">
+      <span className="text-frost/40 light:text-navy/40">{label}</span>
       <span className={tone}>{value}</span>
     </div>
   );

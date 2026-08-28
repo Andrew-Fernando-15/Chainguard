@@ -37,3 +37,14 @@ STATUS: Success
 === WHERE WE LEFT OFF ===
 We are currently ready to begin **STAGE 6 - AI Anomaly Detection (11 Rules)**. 
 The next step is to implement the backend engine that logs all actions (Upload, View, Download) and evaluates them against the 11 anomaly rules, flagging any suspicious behavior and displaying it on the frontend AI Detection page.
+- Fixed light theme contrast globally (Navbar, Dashboard, Landing, Roles, etc.) via native Tailwind variant.
+- Fixed invisible text in FeatureCards and Security sections by correcting corrupted text-frost opacities.
+- Created Implementation Plan for Chain of Custody page updates and demo user seeding.
+- Updated demo accounts in backend/seed.js with precise names, emails, and specific passwords for each role.
+- Fixed dropdown option text visibility issues on the Login page for light and dark modes.
+- Executed backend seed script successfully to populate database with demo users and cases.
+- Added npm run seed command to backend package.json for easy reseeding.
+- Updated User.js role enum to natively support Judge and CBI roles.
+- Updated Login.jsx to include Judge and CBI in the role selection dropdown.
+- Fixed 'User not found' error by sending 401s on the backend for deleted/invalid JWT users and auto-logging out on the frontend.
+- Ran seed script to provision the exact 5 demo accounts requested and 8 demo cases.

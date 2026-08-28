@@ -51,7 +51,7 @@ function timeAgo(dateStr) {
 }
 
 export default function Dashboard() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
   const [evidence, setEvidence] = useState([]);
   const [cases, setCases] = useState([]);
@@ -72,7 +72,13 @@ export default function Dashboard() {
           setCases(caseList || []);
         }
       } catch (err) {
-        if (!cancelled) setError(err.response?.data?.error || 'Failed to load data from the server.');
+        if (!cancelled) {
+          if (err.response?.status === 401) {
+            logout();
+          } else {
+            setError(err.response?.data?.error || 'Failed to load data from the server.');
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -178,7 +184,7 @@ export default function Dashboard() {
       <div className="mb-8">
         <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">Overview</p>
         <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">Evidence Command Center</h1>
-        <p className="mt-1 text-sm text-frost/50">Real-time view across every case, hash, and on-chain transaction.</p>
+        <p className="mt-1 text-sm text-frost/50 light:text-navy/50">Real-time view across every case, hash, and on-chain transaction.</p>
       </div>
 
       {error && (
@@ -188,7 +194,7 @@ export default function Dashboard() {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-20 text-frost/50">
+        <div className="flex items-center justify-center gap-2 py-20 text-frost/50 light:text-navy/50">
           <FiLoader className="animate-spin" /> Loading live evidence data...
         </div>
       ) : (
@@ -200,16 +206,16 @@ export default function Dashboard() {
           <div className="mt-6 glass rounded-2xl p-6">
             <h3 className="font-semibold text-lg">My Cases</h3>
             {cases.length === 0 ? (
-              <p className="mt-4 text-sm text-frost/40">You are not allotted to any cases yet.</p>
+              <p className="mt-4 text-sm text-frost/40 light:text-navy/40">You are not allotted to any cases yet.</p>
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {cases.map(c => (
-                  <div key={c._id} className="rounded-xl border border-white/5 bg-white/5 p-4 hover:border-cyan/30 cursor-pointer transition-colors" onClick={() => navigate(`/case/${c._id}`)}>
+                  <div key={c._id} className="rounded-xl border border-white/5 light:border-navy/5 bg-white/5 light:bg-navy/5 p-4 hover:border-cyan/30 cursor-pointer transition-colors" onClick={() => navigate(`/case/${c._id}`)}>
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-mono text-xs text-cyan/70">{c.caseId}</span>
                       <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase ${STATUS_STYLE[c.status] || STATUS_STYLE.Pending}`}>{c.status}</span>
                     </div>
-                    <h4 className="font-semibold text-frost/90">{c.name}</h4>
+                    <h4 className="font-semibold text-frost/90 light:text-navy/90">{c.name}</h4>
                   </div>
                 ))}
               </div>
@@ -238,12 +244,12 @@ export default function Dashboard() {
             <div className="glass rounded-2xl p-6 lg:col-span-2">
               <h3 className="font-semibold">Recent Activity</h3>
               {recentActivity.length === 0 ? (
-                <p className="mt-4 text-sm text-frost/40">No evidence uploaded yet — head to the Upload page to add the first record.</p>
+                <p className="mt-4 text-sm text-frost/40 light:text-navy/40">No evidence uploaded yet — head to the Upload page to add the first record.</p>
               ) : (
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="text-xs uppercase tracking-wider text-frost/40">
+                      <tr className="text-xs uppercase tracking-wider text-frost/40 light:text-navy/40">
                         <th className="pb-3">Evidence ID</th>
                         <th className="pb-3">File</th>
                         <th className="pb-3">Officer</th>
@@ -251,21 +257,21 @@ export default function Dashboard() {
                         <th className="pb-3">Time</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-white/5 light:divide-navy/5">
                       {recentActivity.map((row) => (
                         <motion.tr
                           key={row.id}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          className="hover:bg-white/5"
+                          className="hover:bg-white/5 light:bg-navy/5"
                         >
                           <td className="py-3 font-mono text-xs text-cyan/80">{row.id.slice(-8)}</td>
                           <td className="py-3">{row.name}</td>
-                          <td className="py-3 text-frost/60">{row.officer}</td>
+                          <td className="py-3 text-frost/60 light:text-navy/60">{row.officer}</td>
                           <td className="py-3">
                             <span className={`rounded-full px-2.5 py-1 text-xs ${STATUS_STYLE[row.status] || STATUS_STYLE.Pending}`}>{row.status}</span>
                           </td>
-                          <td className="py-3 text-frost/40">{row.time}</td>
+                          <td className="py-3 text-frost/40 light:text-navy/40">{row.time}</td>
                         </motion.tr>
                       ))}
                     </tbody>
@@ -276,14 +282,14 @@ export default function Dashboard() {
 
             <div className="glass rounded-2xl p-6">
               <h3 className="flex items-center gap-2 font-semibold"><FiBell /> Notifications</h3>
-              <p className="mt-1 text-xs text-frost/30">Demo feed — activity alerts aren't wired to the backend yet.</p>
+              <p className="mt-1 text-xs text-frost/30 light:text-navy/30">Demo feed — activity alerts aren't wired to the backend yet.</p>
               <div className="mt-4 space-y-3">
                 {notifications.map((n) => (
-                  <div key={n.id} className="flex items-start gap-3 rounded-xl bg-white/5 p-3 text-sm">
+                  <div key={n.id} className="flex items-start gap-3 rounded-xl bg-white/5 light:bg-navy/5 p-3 text-sm">
                     {n.type === 'alert' ? <FiAlertTriangle className="mt-0.5 flex-shrink-0 text-orange-400" /> : <FiCheckCircle className="mt-0.5 flex-shrink-0 text-green" />}
                     <div>
-                      <p className="text-frost/80">{n.text}</p>
-                      <p className="text-xs text-frost/40">{n.time} ago</p>
+                      <p className="text-frost/80 light:text-navy/80">{n.text}</p>
+                      <p className="text-xs text-frost/40 light:text-navy/40">{n.time} ago</p>
                     </div>
                   </div>
                 ))}
@@ -301,7 +307,7 @@ function ChartCard({ title, children, className = '', demo = false }) {
     <div className={`glass rounded-2xl p-6 ${className}`}>
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">{title}</h3>
-        {demo && <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-frost/30">Demo data</span>}
+        {demo && <span className="rounded-full bg-white/5 light:bg-navy/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-frost/30 light:text-navy/30">Demo data</span>}
       </div>
       <div className="mt-4 h-64">{children}</div>
     </div>

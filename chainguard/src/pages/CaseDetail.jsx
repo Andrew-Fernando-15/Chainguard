@@ -10,7 +10,7 @@ const STATUS_STYLE = {
   Pending: 'text-cyan bg-cyan/10',
   Flagged: 'text-orange-400 bg-orange-400/10',
   Active: 'text-blue bg-blue/10',
-  Closed: 'text-frost/60 bg-white/10',
+  Closed: 'text-frost/60 light:text-navy/60 bg-white/10 light:bg-navy/10',
 };
 
 export default function CaseDetail() {
@@ -78,7 +78,7 @@ export default function CaseDetail() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center gap-2 text-frost/50">
+      <div className="flex min-h-[50vh] items-center justify-center gap-2 text-frost/50 light:text-navy/50">
         <FiLoader className="animate-spin" /> Loading case details...
       </div>
     );
@@ -111,14 +111,14 @@ export default function CaseDetail() {
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">{caseData.caseId}</p>
           <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">{caseData.name}</h1>
-          <p className="mt-1 text-sm text-frost/50">Current In-Charge: {caseData.currentInCharge?.name || 'Unassigned'}</p>
+          <p className="mt-1 text-sm text-frost/50 light:text-navy/50">Current In-Charge: {caseData.currentInCharge?.name || 'Unassigned'}</p>
         </div>
         
         {canChangeStatus ? (
           <select 
             value={caseData.status} 
             onChange={handleStatusChange}
-            className={`rounded-xl px-3 py-2 text-sm outline-none cursor-pointer border border-white/10 ${STATUS_STYLE[caseData.status] || STATUS_STYLE.Pending}`}
+            className={`rounded-xl px-3 py-2 text-sm outline-none cursor-pointer border border-white/10 light:border-navy/10 ${STATUS_STYLE[caseData.status] || STATUS_STYLE.Pending}`}
           >
             <option value="Pending" className="bg-navy text-white">Pending</option>
             <option value="Active" className="bg-navy text-white">Active</option>
@@ -135,19 +135,19 @@ export default function CaseDetail() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg">Case Evidence</h3>
           {caseData.status !== 'Closed' && (
-            <button onClick={() => navigate('/upload')} className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20 transition-colors">
+            <button onClick={() => navigate('/upload')} className="rounded-lg bg-white/10 light:bg-navy/10 px-4 py-2 text-sm text-white hover:bg-white/20 light:bg-navy/20 transition-colors">
               Upload New Evidence
             </button>
           )}
         </div>
 
         {evidence.length === 0 ? (
-          <p className="mt-4 text-sm text-frost/40">No evidence found in this case.</p>
+          <p className="mt-4 text-sm text-frost/40 light:text-navy/40">No evidence found in this case.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="text-xs uppercase tracking-wider text-frost/40">
+                <tr className="text-xs uppercase tracking-wider text-frost/40 light:text-navy/40">
                   <th className="pb-3">Category</th>
                   <th className="pb-3">File Name</th>
                   <th className="pb-3">Status</th>
@@ -155,15 +155,15 @@ export default function CaseDetail() {
                   <th className="pb-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-white/5 light:divide-navy/5">
                 {evidence.map((row) => (
-                  <motion.tr key={row._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-white/5 cursor-pointer">
+                  <motion.tr key={row._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-white/5 light:bg-navy/5 cursor-pointer">
                     <td className="py-3 text-cyan/80">{row.category}</td>
                     <td className="py-3">{row.fileName}</td>
                     <td className="py-3">
                       <span className={`rounded-full px-2.5 py-1 text-xs ${STATUS_STYLE[row.status] || STATUS_STYLE.Pending}`}>{row.status}</span>
                     </td>
-                    <td className="py-3 text-frost/40">{new Date(row.createdAt).toLocaleDateString()}</td>
+                    <td className="py-3 text-frost/40 light:text-navy/40">{new Date(row.createdAt).toLocaleDateString()}</td>
                     <td className="py-3 text-right">
                       <div className="flex justify-end gap-3">
                         <button 
@@ -172,7 +172,7 @@ export default function CaseDetail() {
                             navigator.clipboard.writeText(row._id);
                             alert(`Evidence ID copied to clipboard: ${row._id}\nYou can paste this in the Verify page.`);
                           }} 
-                          className="text-frost/50 hover:text-cyan transition-colors text-xs" 
+                          className="text-frost/50 light:text-navy/50 hover:text-cyan transition-colors text-xs" 
                           title="Copy Evidence ID for Verification"
                         >
                           Copy ID

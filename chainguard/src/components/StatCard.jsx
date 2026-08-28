@@ -16,8 +16,8 @@ export default function StatCard({ label, value, delta, accent = 'blue' }) {
       viewport={{ once: true }}
       className={`glass rounded-2xl bg-gradient-to-br p-5 ${ACCENTS[accent]}`}
     >
-      <p className="text-xs uppercase tracking-wider text-frost/50">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-frost">
+      <p className="text-xs uppercase tracking-wider text-frost/50 light:text-navy/50">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-frost light:text-navy">
         <AnimatedCounter value={value} />
       </p>
       <p className={`mt-1 text-xs ${positive ? 'text-green' : 'text-cyan'}`}>{delta} this month</p>

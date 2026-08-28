@@ -42,8 +42,8 @@ export async function checkCaseAllotment(req, res, next) {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    if (user.position === 'CBI') {
-      return next(); // CBI can access any case
+    if (user.position === 'CBI' || user.position === 'Judge') {
+      return next(); // CBI and Judge can access any case
     }
 
     let caseDoc;

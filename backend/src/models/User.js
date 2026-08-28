@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['Investigating Officer', 'Normal Officer', 'N/A'],
+      enum: ['Investigating Officer', 'Normal Officer', 'Judge', 'CBI', 'N/A'],
       default: 'N/A',
     },
     allottedCases: [

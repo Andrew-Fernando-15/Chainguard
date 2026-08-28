@@ -38,16 +38,46 @@ export const notifications = [
   { id: 3, type: 'info', text: 'New investigator access request pending', time: '1h' },
 ];
 
-export const custodyTimeline = [
-  { role: 'Officer Upload', person: 'Insp. R. Sharma', time: '12 Jul 2026, 09:14', tx: '0x7ac1...4e2b', signature: 'SHA256:9f2a...c71d' },
-  { role: 'Investigator Access', person: 'Insp. P. Nair', time: '12 Jul 2026, 14:02', tx: '0x91bd...aa30', signature: 'SHA256:2b7e...0a44' },
-  { role: 'Forensic Analysis', person: 'Dr. A. Khan', time: '13 Jul 2026, 10:47', tx: '0xf03e...9c12', signature: 'SHA256:eb61...5f9a' },
-  { role: 'Court Review', person: 'Court Admin', time: '15 Jul 2026, 16:20', tx: '0x22aa...7710', signature: 'SHA256:44d0...b823' },
-  { role: 'Judge Verification', person: 'Judge S. Verma', time: '16 Jul 2026, 11:05', tx: '0xd4c9...0021', signature: 'SHA256:aa19...ff02' },
-];
+export const custodyTimelines = {
+  'EVD-10231': [
+    { role: 'Officer Upload', person: 'Insp. R. Sharma', time: '12 Jul 2026, 09:14', tx: '0x7ac1...4e2b', signature: 'SHA256:9f2a...c71d' },
+    { role: 'Investigator Access', person: 'Insp. P. Nair', time: '12 Jul 2026, 14:02', tx: '0x91bd...aa30', signature: 'SHA256:2b7e...0a44' },
+    { role: 'Forensic Analysis', person: 'Dr. A. Khan', time: '13 Jul 2026, 10:47', tx: '0xf03e...9c12', signature: 'SHA256:eb61...5f9a' },
+    { role: 'Court Review', person: 'Court Admin', time: '15 Jul 2026, 16:20', tx: '0x22aa...7710', signature: 'SHA256:44d0...b823' },
+    { role: 'Judge Verification', person: 'Judge S. Verma', time: '16 Jul 2026, 11:05', tx: '0xd4c9...0021', signature: 'SHA256:aa19...ff02' },
+  ],
+  'EVD-10232': [
+    { role: 'Officer Upload', person: 'Officer John', time: '14 Aug 2026, 08:30', tx: '0x1a2b...3c4d', signature: 'SHA256:123a...456b' },
+    { role: 'Investigator Access', person: 'Insp. P. Nair', time: '15 Aug 2026, 09:15', tx: '0x5e6f...7g8h', signature: 'SHA256:789c...012d' }
+  ],
+  'EVD-10233': [
+    { role: 'Officer Upload', person: 'Officer John', time: '01 Jan 2026, 12:00', tx: '0xaa11...bb22', signature: 'SHA256:cc33...dd44' },
+    { role: 'Judge Verification', person: 'Judge S. Verma', time: '10 Feb 2026, 10:00', tx: '0xee55...ff66', signature: 'SHA256:gg77...hh88' },
+    { role: 'Case Closed', person: 'System', time: '15 Feb 2026, 12:00', tx: '0x1122...3344', signature: 'SHA256:5566...7788' }
+  ],
+  'EVD-10234': [
+    { role: 'Officer Upload', person: 'Insp. R. Sharma', time: '10 Sep 2026, 14:00', tx: '0x9988...7766', signature: 'SHA256:5544...3322' },
+    { role: 'Forensic Analysis', person: 'Dr. Sarah Forensic', time: '12 Sep 2026, 16:30', tx: '0x2211...0099', signature: 'SHA256:1122...3344' }
+  ],
+  'EVD-10235': [
+    { role: 'Officer Upload', person: 'Officer John', time: '20 Oct 2026, 09:00', tx: '0x0000...1111', signature: 'SHA256:2222...3333' }
+  ],
+  'EVD-10236': [
+    { role: 'Officer Upload', person: 'Inspector Smith', time: '05 Nov 2026, 11:20', tx: '0xabcd...ef01', signature: 'SHA256:2345...6789' },
+    { role: 'CBI Review', person: 'Director CBI', time: '06 Nov 2026, 10:10', tx: '0xbcde...f012', signature: 'SHA256:3456...789a' }
+  ],
+  'EVD-10237': [
+    { role: 'Officer Upload', person: 'Insp. P. Nair', time: '10 Dec 2025, 08:45', tx: '0xcdef...0123', signature: 'SHA256:4567...89ab' },
+    { role: 'Case Closed', person: 'Judge Miller', time: '20 Dec 2025, 14:00', tx: '0xdef0...1234', signature: 'SHA256:5678...9abc' }
+  ],
+  'EVD-10238': [
+    { role: 'Officer Upload', person: 'Insp. R. Sharma', time: '15 Mar 2026, 16:50', tx: '0xef01...2345', signature: 'SHA256:6789...abcd' },
+    { role: 'CBI Review', person: 'Director CBI', time: '18 Mar 2026, 11:30', tx: '0xf012...3456', signature: 'SHA256:789a...bcde' }
+  ]
+};
 
 export const roles = [
-  { name: 'Admin', permissions: ['Manage users', 'Configure system', 'View all logs', 'Revoke access'] },
+  { name: 'CBI', permissions: ['Manage users', 'View all cases globally', 'Override status', 'Full system visibility', 'Revoke access'] },
   { name: 'Police', permissions: ['Upload evidence', 'View own case files', 'Request analysis'] },
   { name: 'Investigator', permissions: ['Access assigned cases', 'Annotate evidence', 'Request forensic review'] },
   { name: 'Judge', permissions: ['View verified evidence', 'Approve chain of custody', 'Digitally sign rulings'] },

@@ -39,7 +39,7 @@ export default function Loader({ onDone }) {
         <div className="absolute inset-0 rounded-2xl border-t-2 border-cyan animate-spin" />
         <span className="text-lg font-bold text-cyan">CG</span>
       </div>
-      <p className="mt-6 font-mono text-xs tracking-widest text-frost/50">HASHING BLOCK</p>
+      <p className="mt-6 font-mono text-xs tracking-widest text-frost/50 light:text-navy/50">HASHING BLOCK</p>
       <p className="mt-1 font-mono text-sm text-cyan">{hash}</p>
       <div className="mt-6 h-1 w-56 overflow-hidden rounded-full bg-slate">
         <div

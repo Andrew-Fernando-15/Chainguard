@@ -15,7 +15,7 @@ export default function FeatureCard({ icon, title, description, index = 0 }) {
         {icon}
       </div>
       <h3 className="relative mt-4 font-semibold">{title}</h3>
-      <p className="relative mt-2 text-sm leading-relaxed text-frost/55">{description}</p>
+      <p className="relative mt-2 text-sm leading-relaxed text-frost/80 light:text-navy/80">{description}</p>
     </motion.div>
   );
 }
