@@ -52,7 +52,7 @@ ChainGuard solves this by:
 ---
 
 ## Project Structure
-Chainguard/
+Chainguard//<br>
 ├── chainguard/          → Frontend (React + Vite)/<br>
 ├── backend/             → Node.js + Express API/<br>
 ├── blockchain/          → Solidity Smart Contract + Hardhat/<br>
@@ -77,6 +77,7 @@ This starts MongoDB and Ganache.
 Backend
 cd backend
 cp .env.example .env
+
 # Edit .env and set JWT_SECRET
 npm install
 npm run dev
