@@ -53,15 +53,15 @@ ChainGuard solves this by:
 
 ## Project Structure
 Chainguard/
-├── chainguard/          → Frontend (React + Vite)
-├── backend/             → Node.js + Express API
-├── blockchain/          → Solidity Smart Contract + Hardhat
-├── docker-compose.yml   → MongoDB + Ganache
-├── PRD.txt
-├── SRS.txt
-├── System Architecture.txt
-├── UI-UX.txt
-└── Deployment plan.txt
+├── chainguard/          → Frontend (React + Vite)/<br>
+├── backend/             → Node.js + Express API/<br>
+├── blockchain/          → Solidity Smart Contract + Hardhat/<br>
+├── docker-compose.yml   → MongoDB + Ganache/<br>
+├── PRD.txt/<br>
+├── SRS.txt/<br>
+├── System Architecture.txt/<br>
+├── UI-UX.txt/<br>
+└── Deployment plan.txt/<br>
 
 ---
 
