@@ -17,6 +17,10 @@ services:
     command: >
       --wallet.deterministic
       --chain.chainId 1337
+      --database.dbPath /data
+    volumes:
+      - ganache-data:/data
 
 volumes:
   mongo-data:
+  ganache-data:
