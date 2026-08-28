@@ -241,7 +241,26 @@ router.post('/verify', async (req, res) => {
       return res.status(400).json({ error: 'This evidence was not recorded on the blockchain.' });
     }
 
-    const hashToCheck = currentHash || evidence.fileHash;
+    let hashToCheck = currentHash;
+    if (!hashToCheck) {
+      if (fs.existsSync(evidence.filePath)) {
+        try {
+          hashToCheck = await new Promise((resolve, reject) => {
+            const hashStream = crypto.createHash('sha256');
+            const readStream = fs.createReadStream(evidence.filePath);
+            const decryptStream = getDecryptStream(evidence.iv);
+            
+            readStream.pipe(decryptStream).pipe(hashStream)
+              .on('finish', () => resolve(hashStream.read().toString('hex')))
+              .on('error', reject);
+          });
+        } catch (err) {
+          hashToCheck = 'ERROR_COMPUTING_HASH';
+        }
+      } else {
+        hashToCheck = 'FILE_MISSING';
+      }
+    }
     const match = await verifyEvidenceOnChain(evidence.blockchainEvidenceId, hashToCheck);
     const info = await getEvidenceInfoOnChain(evidence.blockchainEvidenceId);
     

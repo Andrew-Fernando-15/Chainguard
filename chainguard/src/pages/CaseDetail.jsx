@@ -135,7 +135,7 @@ export default function CaseDetail() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg">Case Evidence</h3>
           {caseData.status !== 'Closed' && (
-            <button onClick={() => navigate('/upload')} className="rounded-lg bg-white/10 light:bg-navy/10 px-4 py-2 text-sm text-white hover:bg-white/20 light:bg-navy/20 transition-colors">
+            <button onClick={() => navigate(`/upload?caseId=${caseData.caseId}`)} className="rounded-lg bg-white/10 light:bg-navy/10 px-4 py-2 text-sm text-white hover:bg-white/20 light:bg-navy/20 transition-colors">
               Upload New Evidence
             </button>
           )}

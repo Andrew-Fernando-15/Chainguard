@@ -54,7 +54,18 @@ export async function checkCaseAllotment(req, res, next) {
     }
 
     if (!caseDoc) {
-      return res.status(404).json({ error: 'Case not found in database' });
+      if (req.method === 'POST' && req.originalUrl.includes('/upload')) {
+        caseDoc = await Case.create({
+          caseId,
+          name: `Case ${caseId}`,
+          status: 'Active',
+          currentInCharge: user._id
+        });
+        user.allottedCases.push(caseDoc._id);
+        await user.save();
+      } else {
+        return res.status(404).json({ error: 'Case not found in database' });
+      }
     }
 
     if (caseDoc.status === 'Closed' && user.position !== 'Judge' && user.position !== 'CBI') {

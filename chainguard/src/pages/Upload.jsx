@@ -3,19 +3,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiUploadCloud, FiFile, FiHash, FiLink, FiCheckCircle, FiX } from 'react-icons/fi';
 import { sha256File, shortHash } from '../utils/hash';
 import { mockUploadToBlockchain, uploadEvidence } from '../services/api';
+import { useSearchParams } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 
 const STAGES = ['idle', 'hashing', 'hashed', 'chaining', 'done'];
 
 export default function Upload() {
+  const [searchParams] = useSearchParams();
   const [file, setFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [stage, setStage] = useState('idle');
   const [progress, setProgress] = useState(0);
   const [hash, setHash] = useState('');
   const [chainInfo, setChainInfo] = useState(null);
-  const [meta, setMeta] = useState({ caseId: '', description: '', category: 'Video' });
+  const [meta, setMeta] = useState({ caseId: searchParams.get('caseId') || '', description: '', category: 'Video' });
   const inputRef = useRef(null);
   const { pushToast } = useToast();
   const { token } = useAuth();

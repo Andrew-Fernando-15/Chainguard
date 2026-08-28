@@ -21,14 +21,14 @@ async function seed() {
 
     // Create 8 Cases
     const casesData = [
-      { caseId: 'EVD-10231', name: 'Cyber Fraud Investigation', status: 'Active' },
-      { caseId: 'EVD-10232', name: 'Narcotics Raid #42', status: 'Pending' },
-      { caseId: 'EVD-10233', name: 'Arson at 5th Avenue', status: 'Closed' },
-      { caseId: 'EVD-10234', name: 'Corporate Embezzlement', status: 'Active' },
-      { caseId: 'EVD-10235', name: 'Hit and Run Incident', status: 'Pending' },
-      { caseId: 'EVD-10236', name: 'Digital Forgery Case', status: 'Active' },
-      { caseId: 'EVD-10237', name: 'Bank Robbery Evidence', status: 'Closed' },
-      { caseId: 'EVD-10238', name: 'Insider Trading Suspicion', status: 'Pending' },
+      { caseId: 'CASE-10231', name: 'Cyber Fraud Investigation', status: 'Active' },
+      { caseId: 'CASE-10232', name: 'Narcotics Raid #42', status: 'Pending' },
+      { caseId: 'CASE-10233', name: 'Arson at 5th Avenue', status: 'Closed' },
+      { caseId: 'CASE-10234', name: 'Corporate Embezzlement', status: 'Active' },
+      { caseId: 'CASE-10235', name: 'Hit and Run Incident', status: 'Pending' },
+      { caseId: 'CASE-10236', name: 'Digital Forgery Case', status: 'Active' },
+      { caseId: 'CASE-10237', name: 'Bank Robbery Evidence', status: 'Closed' },
+      { caseId: 'CASE-10238', name: 'Insider Trading Suspicion', status: 'Pending' },
     ];
 
     console.log('Creating Cases...');

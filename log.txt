@@ -48,3 +48,8 @@ The next step is to implement the backend engine that logs all actions (Upload, 
 - Updated Login.jsx to include Judge and CBI in the role selection dropdown.
 - Fixed 'User not found' error by sending 401s on the backend for deleted/invalid JWT users and auto-logging out on the frontend.
 - Ran seed script to provision the exact 5 demo accounts requested and 8 demo cases.
+- Triggered backend restart to clear blockchain contract cache.
+- Updated seed script to use CASE- prefix instead of EVD- for Case IDs.
+- Updated CaseDetail.jsx so the 'Upload New Evidence' button passes the caseId via URL parameter.
+- Updated Upload.jsx to read the caseId from the URL and pre-fill the form.
+- Updated backend auth middleware to dynamically create a Case during upload if it doesn't exist in the database.

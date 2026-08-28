@@ -24,3 +24,6 @@ async function start() {
 
 start();
 // trigger restart
+// Trigger restart
+
+// Trigger restart for auth.js change
