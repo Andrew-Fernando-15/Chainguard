@@ -67,46 +67,52 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4" autoComplete="off">
-          <div className="relative">
-            <FiUser className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Full name"
-              required
-              autoComplete="off"
-              data-lpignore="true"
-              className="w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 light:text-navy/30 focus:border-cyan/50"
-            />
-          </div>
+          {mode === 'register' && (
+            <>
+              <div className="relative">
+                <FiUser className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Full name"
+                  required
+                  autoComplete="off"
+                  data-lpignore="true"
+                  className="w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 light:text-navy/30 focus:border-cyan/50"
+                />
+              </div>
 
-          <div className="flex gap-2">
-            <select
-              name="position"
-              value={form.position}
-              onChange={handleChange}
-              className="w-1/2 rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50 text-frost light:text-navy"
-            >
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Police">Police</option>
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Forensic">Forensic</option>
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Judge">Judge</option>
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="CBI">CBI</option>
-            </select>
+              <div className="flex gap-2">
+                <select
+                  name="position"
+                  value={form.position}
+                  onChange={handleChange}
+                  className="w-1/2 rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50 text-frost light:text-navy"
+                >
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Police">Police</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Forensic">Forensic</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Judge">Judge</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="CBI">CBI</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Investigator">Investigator</option>
+                </select>
 
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-1/2 rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50 text-frost light:text-navy"
-            >
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Investigating Officer">Investigating Officer</option>
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Normal Officer">Normal Officer</option>
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Judge">Judge</option>
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="CBI">CBI</option>
-              <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="N/A">N/A</option>
-            </select>
-          </div>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                  className="w-1/2 rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 px-3 text-sm outline-none focus:border-cyan/50 text-frost light:text-navy"
+                >
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Investigating Officer">Investigating Officer</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Normal Officer">Normal Officer</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Forensic Expert">Forensic Expert</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="Judge">Judge</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="CBI Officer">CBI Officer</option>
+                  <option className="bg-slate-900 text-white light:bg-white light:text-navy" value="N/A">N/A</option>
+                </select>
+              </div>
+            </>
+          )}
 
           <div className="relative">
             <FiMail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />

@@ -1,5 +1,5 @@
 {
-  "address": "0x5b1869D9A4C187F2EAa108f3062412ecf0526b24",
+  "address": "0x86072CbFF48dA3C1F01824a6761A03F105BCC697",
   "abi": [
     {
       "anonymous": false,
@@ -247,5 +247,5 @@
     }
   ],
   "network": "ganache",
-  "deployedAt": "2026-08-28T09:58:41.904Z"
+  "deployedAt": "2026-10-12T13:28:22.349Z"
 }

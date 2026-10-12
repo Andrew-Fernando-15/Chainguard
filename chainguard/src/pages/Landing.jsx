@@ -189,7 +189,7 @@ function SdgCard({ number, title, desc, color }) {
       viewport={{ once: true }}
       className={`glass rounded-2xl bg-gradient-to-br p-8 ${color}`}
     >
-      <span className="font-mono text-4xl font-bold text-frost/2 light:text-navy/20 light:text-navy/20">SDG {number}</span>
+      <span className="font-mono text-4xl font-bold text-frost/20 light:text-navy/20">SDG {number}</span>
       <h4 className="mt-3 font-semibold text-frost light:text-navy">{title}</h4>
       <p className="mt-2 text-sm text-frost/80 light:text-navy/80">{desc}</p>
     </motion.div>

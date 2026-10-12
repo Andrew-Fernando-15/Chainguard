@@ -2,8 +2,11 @@ import mongoose from 'mongoose';
 
 const evidenceSchema = new mongoose.Schema(
   {
-    caseId: { type: String, required: true, trim: true },
+    caseId: { type: String, required: true, trim: true, index: true },
     category: { type: String, required: true },
+    title: { type: String },
+    description: { type: String },
+    collectedDate: { type: Date },
     fileName: { type: String, required: true },
     fileHash: { type: String, required: true }, // SHA-256, computed in the frontend
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

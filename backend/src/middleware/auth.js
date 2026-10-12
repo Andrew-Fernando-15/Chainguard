@@ -28,7 +28,7 @@ export function requireRole(...roles) {
 
 import Case from '../models/Case.js';
 import User from '../models/User.js';
-import { logAndAnalyze } from '../services/aiEngine.js';
+import { logActivity } from '../services/aiAnomalyEngine.js';
 
 export async function checkCaseAllotment(req, res, next) {
   try {
@@ -54,28 +54,17 @@ export async function checkCaseAllotment(req, res, next) {
     }
 
     if (!caseDoc) {
-      if (req.method === 'POST' && req.originalUrl.includes('/upload')) {
-        caseDoc = await Case.create({
-          caseId,
-          name: `Case ${caseId}`,
-          status: 'Active',
-          currentInCharge: user._id
-        });
-        user.allottedCases.push(caseDoc._id);
-        await user.save();
-      } else {
-        return res.status(404).json({ error: 'Case not found in database' });
-      }
+      return res.status(404).json({ error: 'Case not found in database' });
     }
 
     if (caseDoc.status === 'Closed' && user.position !== 'Judge' && user.position !== 'CBI') {
-      await logAndAnalyze(user._id, 'failed_access', { caseId: caseDoc.caseId, reason: 'Rule 10: Access after case is closed' });
+      await logActivity({ user, action: 'ACCESS_DENIED', caseId: caseDoc.caseId, details: 'Rule 10: Access after case is closed', req });
       return res.status(403).json({ error: 'This case is closed. You no longer have access.' });
     }
 
-    const isAllotted = user.allottedCases.some((id) => id.toString() === caseDoc._id.toString());
+    const isAllotted = caseDoc.allottedTo.includes(user.name);
     if (!isAllotted) {
-      await logAndAnalyze(user._id, 'failed_access', { caseId: caseDoc.caseId, reason: 'Rule 5: Access to non-allotted case' });
+      await logActivity({ user, action: 'ACCESS_DENIED', caseId: caseDoc.caseId, details: 'Rule 5: Access to non-allotted case', req });
       return res.status(403).json({ error: 'You are not allotted to this case' });
     }
 

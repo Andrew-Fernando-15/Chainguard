@@ -6,19 +6,37 @@ const router = express.Router();
 
 router.use(verifyToken);
 
-// GET /api/ai/logs - Fetch all flagged suspicious activities
-// Depending on requirements, we might want to restrict this to Judges or CBI. 
-// For now, let's just return all logs for the AI Detection page to display.
-router.get('/logs', async (req, res) => {
+// GET /api/ai/anomalies - Fetch logs where suspiciousFlag = true
+router.get('/anomalies', async (req, res) => {
   try {
-    const logs = await AccessLog.find({ suspiciousFlag: true })
+    const { date, role, rule } = req.query;
+    
+    let query = { suspiciousFlag: true };
+
+    if (date) {
+      // date format expected: YYYY-MM-DD
+      const start = new Date(date);
+      const end = new Date(date);
+      end.setDate(end.getDate() + 1);
+      query.createdAt = { $gte: start, $lt: end };
+    }
+
+    if (role) {
+      query.role = role;
+    }
+
+    if (rule) {
+      query.triggeredRules = { $regex: rule, $options: 'i' };
+    }
+
+    const logs = await AccessLog.find(query)
       .populate('userId', 'name position role')
       .populate('evidenceId', 'fileName category caseId')
       .sort({ createdAt: -1 });
     
     res.json(logs);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch AI logs', details: err.message });
+    res.status(500).json({ error: 'Failed to fetch AI anomalies', details: err.message });
   }
 });
 

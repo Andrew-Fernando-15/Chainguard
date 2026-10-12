@@ -4,15 +4,12 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
   BarElement, ArcElement, Tooltip, Legend, Filler,
 } from 'chart.js';
-import { motion } from 'framer-motion';
-import { FiBell, FiCheckCircle, FiAlertTriangle, FiLoader } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiBell, FiCheckCircle, FiAlertTriangle, FiLoader, FiPlus, FiX, FiSearch } from 'react-icons/fi';
 import StatCard from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
-import { listEvidence, listCases } from '../services/api';
+import { listEvidence, listCases, getAnomalies, createCase } from '../services/api';
 import { useNavigate } from 'react-router-dom';
-import {
-  accessRequests, aiAlerts, notifications,
-} from '../data/dummyData';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler);
 
@@ -51,25 +48,62 @@ function timeAgo(dateStr) {
 }
 
 export default function Dashboard() {
-  const { token, logout } = useAuth();
+  const { token, user, logout } = useAuth();
   const navigate = useNavigate();
   const [evidence, setEvidence] = useState([]);
   const [cases, setCases] = useState([]);
+  const [anomalies, setAnomalies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Create Case Modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newCaseId, setNewCaseId] = useState('');
+  const [newCaseName, setNewCaseName] = useState('');
+  const [creatingCase, setCreatingCase] = useState(false);
+
+  // Officer case limit (max 5 cases, not applied on Judge or CBI)
+  const isExemptFromLimit = user?.position === 'Judge' || user?.position === 'CBI';
+  const hasReachedCaseLimit = !isExemptFromLimit && cases.length >= 5;
+
+  // Search for Cases (showing all one-by-one without pagination)
+  const [caseSearchQuery, setCaseSearchQuery] = useState('');
+
+  const handleCreateCase = async (e) => {
+    e.preventDefault();
+    if (!newCaseId || !newCaseName) return;
+    if (hasReachedCaseLimit) {
+      alert('Officer case limit reached. A maximum of 5 cases can be allotted per officer.');
+      return;
+    }
+    try {
+      setCreatingCase(true);
+      const res = await createCase(newCaseId, newCaseName, token);
+      setCases([...cases, res.case]);
+      setShowCreateModal(false);
+      setNewCaseId('');
+      setNewCaseName('');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to create case');
+    } finally {
+      setCreatingCase(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
         setLoading(true);
-        const [items, caseList] = await Promise.all([
+        const [items, caseList, anomalyList] = await Promise.all([
           listEvidence(token),
-          listCases(token)
+          listCases(token),
+          getAnomalies(token).catch(() => []),
         ]);
         if (!cancelled) {
           setEvidence(items || []);
           setCases(caseList || []);
+          setAnomalies(anomalyList || []);
         }
       } catch (err) {
         if (!cancelled) {
@@ -86,6 +120,14 @@ export default function Dashboard() {
     if (token) load();
     return () => { cancelled = true; };
   }, [token]);
+
+  // ---- Filtering (All cases displayed one-by-one) ----
+  const filteredCases = useMemo(() => {
+    return cases.filter(c => 
+      c.caseId.toLowerCase().includes(caseSearchQuery.toLowerCase()) ||
+      c.name.toLowerCase().includes(caseSearchQuery.toLowerCase())
+    );
+  }, [cases, caseSearchQuery]);
 
   // ---- REAL: derived from live /api/evidence data ----
   const liveStats = useMemo(() => {
@@ -135,6 +177,47 @@ export default function Dashboard() {
     return { verified, other };
   }, [evidence]);
 
+  // ---- REAL: AI alerts derived from live anomaly data ----
+  const alertData = useMemo(() => {
+    const buckets = {};
+    anomalies.forEach((a) => {
+      (a.triggeredRules || []).forEach((rule) => {
+        // Extract short rule name like "Rule 6" or "Critical"
+        const shortName = rule.match(/^(Rule \d+|Critical)/)?.[0] || rule.slice(0, 20);
+        buckets[shortName] = (buckets[shortName] || 0) + 1;
+      });
+    });
+    const labels = Object.keys(buckets).slice(0, 6);
+    const data = labels.map((l) => buckets[l]);
+    return {
+      labels: labels.length > 0 ? labels : ['No anomalies'],
+      data: data.length > 0 ? data : [1],
+    };
+  }, [anomalies]);
+
+  // ---- REAL: Access activity by day of week from anomaly timestamps ----
+  const accessByDay = useMemo(() => {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const counts = new Array(7).fill(0);
+    anomalies.forEach((a) => {
+      const d = new Date(a.createdAt);
+      // JS getDay: 0=Sun. Convert to Mon=0
+      const idx = (d.getDay() + 6) % 7;
+      counts[idx]++;
+    });
+    return { labels: dayNames, data: counts };
+  }, [anomalies]);
+
+  // ---- Recent notifications from real anomaly data ----
+  const recentNotifications = useMemo(() => {
+    return anomalies.slice(0, 5).map((a) => ({
+      id: a._id,
+      type: 'alert',
+      text: `${a.action} by ${a.userName || 'Unknown'} — ${(a.triggeredRules || []).join(', ') || 'Suspicious'}`,
+      time: timeAgo(a.createdAt),
+    }));
+  }, [anomalies]);
+
   const lineData = {
     labels: uploadTrend.labels,
     datasets: [{
@@ -148,24 +231,21 @@ export default function Dashboard() {
     }],
   };
 
-  // ---- DEMO: access-request logging and AI anomaly detection aren't
-  // implemented on the backend yet, so these two charts stay illustrative
-  // until those features are built. Everything else on this page is live. ----
   const barData = {
-    labels: accessRequests.labels,
+    labels: accessByDay.labels,
     datasets: [{
-      label: 'Access Requests',
-      data: accessRequests.data,
+      label: 'Suspicious Activity',
+      data: accessByDay.data,
       backgroundColor: '#3B82F6',
       borderRadius: 6,
     }],
   };
 
-  const alertData = {
-    labels: aiAlerts.labels,
+  const alertChartData = {
+    labels: alertData.labels,
     datasets: [{
-      data: aiAlerts.data,
-      backgroundColor: ['#3B82F6', '#06B6D4', '#22C55E', '#F97316'],
+      data: alertData.data,
+      backgroundColor: ['#3B82F6', '#06B6D4', '#22C55E', '#F97316', '#EF4444', '#8B5CF6'],
       borderWidth: 0,
     }],
   };
@@ -204,16 +284,68 @@ export default function Dashboard() {
           </div>
 
           <div className="mt-6 glass rounded-2xl p-6">
-            <h3 className="font-semibold text-lg">My Cases</h3>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <h3 className="font-semibold text-lg">My Cases</h3>
+                <span className="rounded-full bg-cyan/10 px-2.5 py-0.5 text-xs font-mono text-cyan">
+                  {filteredCases.length} {filteredCases.length === 1 ? 'case' : 'cases'}
+                </span>
+                {!isExemptFromLimit && (
+                  <span className="text-xs text-frost/40 light:text-navy/40">
+                    ({cases.length}/5 limit)
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="relative">
+                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-frost/40" />
+                  <input
+                    type="text"
+                    placeholder="Search Cases..."
+                    value={caseSearchQuery}
+                    onChange={(e) => setCaseSearchQuery(e.target.value)}
+                    className="w-48 sm:w-64 rounded-lg border border-white/10 bg-white/5 py-1.5 pl-9 pr-4 text-sm outline-none focus:border-cyan/50"
+                  />
+                </div>
+                {user?.position === 'Police' && (
+                  <button 
+                    onClick={() => {
+                      if (hasReachedCaseLimit) {
+                        alert('Officer case limit reached. Maximum 5 cases allowed per officer.');
+                        return;
+                      }
+                      setShowCreateModal(true);
+                    }}
+                    disabled={hasReachedCaseLimit}
+                    title={hasReachedCaseLimit ? 'Case limit reached (max 5 cases per officer)' : 'Create a new case'}
+                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                      hasReachedCaseLimit
+                        ? 'bg-white/10 text-frost/40 cursor-not-allowed'
+                        : 'bg-cyan text-navy hover:bg-cyan/80'
+                    }`}
+                  >
+                    <FiPlus /> Create Case
+                  </button>
+                )}
+              </div>
+            </div>
             {cases.length === 0 ? (
               <p className="mt-4 text-sm text-frost/40 light:text-navy/40">You are not allotted to any cases yet.</p>
+            ) : filteredCases.length === 0 ? (
+              <p className="mt-4 text-sm text-frost/40 light:text-navy/40">No cases found matching your search.</p>
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {cases.map(c => (
-                  <div key={c._id} className="rounded-xl border border-white/5 light:border-navy/5 bg-white/5 light:bg-navy/5 p-4 hover:border-cyan/30 cursor-pointer transition-colors" onClick={() => navigate(`/case/${c._id}`)}>
+                {filteredCases.map(c => (
+                  <div 
+                    key={c._id} 
+                    className="rounded-xl border border-white/5 light:border-navy/5 bg-white/5 light:bg-navy/5 p-4 hover:border-cyan/30 cursor-pointer transition-colors" 
+                    onClick={() => navigate(`/case/${c._id}`)}
+                  >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-mono text-xs text-cyan/70">{c.caseId}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase ${STATUS_STYLE[c.status] || STATUS_STYLE.Pending}`}>{c.status}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase ${STATUS_STYLE[c.status] || STATUS_STYLE.Pending}`}>
+                        {c.status}
+                      </span>
                     </div>
                     <h4 className="font-semibold text-frost/90 light:text-navy/90">{c.name}</h4>
                   </div>
@@ -226,13 +358,13 @@ export default function Dashboard() {
             <ChartCard title="Evidence Upload Trend" className="lg:col-span-2">
               <Line data={lineData} options={baseOptions} />
             </ChartCard>
-            <ChartCard title="AI Alerts" demo>
-              <Doughnut data={alertData} options={{ ...baseOptions, scales: undefined, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor, boxWidth: 10, font: { size: 10 } } } } }} />
+            <ChartCard title="AI Alerts by Rule">
+              <Doughnut data={alertChartData} options={{ ...baseOptions, scales: undefined, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor, boxWidth: 10, font: { size: 10 } } } } }} />
             </ChartCard>
           </div>
 
           <div className="mt-6 grid gap-5 lg:grid-cols-3">
-            <ChartCard title="Access Requests" className="lg:col-span-2" demo>
+            <ChartCard title="Suspicious Activity by Day" className="lg:col-span-2">
               <Bar data={barData} options={baseOptions} />
             </ChartCard>
             <ChartCard title="Verification Success">
@@ -281,34 +413,96 @@ export default function Dashboard() {
             </div>
 
             <div className="glass rounded-2xl p-6">
-              <h3 className="flex items-center gap-2 font-semibold"><FiBell /> Notifications</h3>
-              <p className="mt-1 text-xs text-frost/30 light:text-navy/30">Demo feed — activity alerts aren't wired to the backend yet.</p>
+              <h3 className="flex items-center gap-2 font-semibold"><FiBell /> Alerts</h3>
+              <p className="mt-1 text-xs text-frost/30 light:text-navy/30">Recent suspicious activity from the AI engine.</p>
               <div className="mt-4 space-y-3">
-                {notifications.map((n) => (
-                  <div key={n.id} className="flex items-start gap-3 rounded-xl bg-white/5 light:bg-navy/5 p-3 text-sm">
-                    {n.type === 'alert' ? <FiAlertTriangle className="mt-0.5 flex-shrink-0 text-orange-400" /> : <FiCheckCircle className="mt-0.5 flex-shrink-0 text-green" />}
-                    <div>
-                      <p className="text-frost/80 light:text-navy/80">{n.text}</p>
-                      <p className="text-xs text-frost/40 light:text-navy/40">{n.time} ago</p>
+                {recentNotifications.length === 0 ? (
+                  <p className="text-sm text-frost/40 light:text-navy/40">No alerts — system is clean.</p>
+                ) : (
+                  recentNotifications.map((n) => (
+                    <div key={n.id} className="flex items-start gap-3 rounded-xl bg-white/5 light:bg-navy/5 p-3 text-sm">
+                      <FiAlertTriangle className="mt-0.5 flex-shrink-0 text-orange-400" />
+                      <div>
+                        <p className="text-frost/80 light:text-navy/80">{n.text}</p>
+                        <p className="text-xs text-frost/40 light:text-navy/40">{n.time}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
         </>
       )}
+
+      {/* Create Case Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass rounded-2xl w-full max-w-md p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold">Create New Case</h3>
+                <button onClick={() => setShowCreateModal(false)} className="text-frost/50 hover:text-white">
+                  <FiX size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateCase} className="space-y-4">
+                <div>
+                  <label className="block text-sm text-frost/70 mb-1">Case ID (e.g. CASE-2026-004)</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCaseId}
+                    onChange={(e) => setNewCaseId(e.target.value)}
+                    className="w-full rounded-lg border border-white/10 bg-white/5 py-2 px-3 text-sm outline-none focus:border-cyan/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-frost/70 mb-1">Case Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCaseName}
+                    onChange={(e) => setNewCaseName(e.target.value)}
+                    className="w-full rounded-lg border border-white/10 bg-white/5 py-2 px-3 text-sm outline-none focus:border-cyan/50"
+                  />
+                </div>
+                
+                <div className="mt-6 flex justify-end gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={creatingCase}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-cyan px-6 py-2 text-sm font-medium text-navy transition-opacity disabled:opacity-50"
+                  >
+                    {creatingCase ? <><FiLoader className="animate-spin" /> Creating...</> : 'Create Case'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function ChartCard({ title, children, className = '', demo = false }) {
+function ChartCard({ title, children, className = '' }) {
   return (
     <div className={`glass rounded-2xl p-6 ${className}`}>
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{title}</h3>
-        {demo && <span className="rounded-full bg-white/5 light:bg-navy/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-frost/30 light:text-navy/30">Demo data</span>}
-      </div>
+      <h3 className="font-semibold">{title}</h3>
       <div className="mt-4 h-64">{children}</div>
     </div>
   );

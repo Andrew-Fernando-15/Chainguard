@@ -7,20 +7,14 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true }, // stored hashed, never plain text
     position: {
       type: String,
-      enum: ['Police', 'Forensic', 'Judge', 'CBI'],
+      enum: ['Police', 'Forensic', 'Judge', 'CBI', 'Investigator'],
       required: true,
     },
     role: {
       type: String,
-      enum: ['Investigating Officer', 'Normal Officer', 'Judge', 'CBI', 'N/A'],
+      enum: ['Investigating Officer', 'Normal Officer', 'Judge', 'CBI', 'N/A', 'Forensic Expert', 'CBI Officer'],
       default: 'N/A',
     },
-    allottedCases: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Case',
-      }
-    ],
   },
   { timestamps: true }
 );

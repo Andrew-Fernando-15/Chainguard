@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiLoader, FiShield, FiDownload, FiEye } from 'react-icons/fi';
-import { getCase, listCaseEvidence, downloadEvidence, viewEvidence, updateCaseStatus } from '../services/api';
+import { FiArrowLeft, FiLoader, FiShield, FiDownload, FiEye, FiUserPlus, FiX, FiSearch } from 'react-icons/fi';
+import { getCase, listCaseEvidence, downloadEvidence, viewEvidence, updateCaseStatus, reopenCase, getUsers, assignCase } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const STATUS_STYLE = {
   Verified: 'text-green bg-green/10',
@@ -22,6 +22,15 @@ export default function CaseDetail() {
   const [evidence, setEvidence] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isReopening, setIsReopening] = useState(false);
+
+  // Modal State
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +44,7 @@ export default function CaseDetail() {
         if (!cancelled) {
           setCaseData(cData);
           setEvidence(eData || []);
+          setSelectedUsers(cData.allottedTo || []);
         }
       } catch (err) {
         if (!cancelled) setError(err.response?.data?.error || 'Failed to load case data.');
@@ -76,6 +86,65 @@ export default function CaseDetail() {
     }
   };
 
+  const handleReopenCase = async () => {
+    if (!window.confirm("Are you sure you want to reopen this closed case? This is a critical action and will be logged.")) return;
+    setIsReopening(true);
+    try {
+      await reopenCase(id, token);
+      setCaseData({ ...caseData, status: 'Active' });
+      alert("Case successfully reopened!");
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reopen case');
+    } finally {
+      setIsReopening(false);
+    }
+  };
+
+  const openAssignModal = async () => {
+    setShowAssignModal(true);
+    setSearchQuery('');
+    if (allUsers.length === 0) {
+      try {
+        setLoadingUsers(true);
+        const users = await getUsers(token);
+        setAllUsers(users);
+      } catch (err) {
+        alert(err.response?.data?.error || 'Failed to load users');
+      } finally {
+        setLoadingUsers(false);
+      }
+    }
+  };
+
+  const toggleUserSelection = (userName) => {
+    setSelectedUsers(prev => 
+      prev.includes(userName) 
+        ? prev.filter(n => n !== userName)
+        : [...prev, userName]
+    );
+  };
+
+  const handleAssignSubmit = async () => {
+    try {
+      setAssigning(true);
+      const updated = await assignCase(id, selectedUsers, token);
+      setCaseData(updated.case);
+      setShowAssignModal(false);
+      alert("Officers successfully assigned!");
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to assign case');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter(u => 
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.position.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [allUsers, searchQuery]);
+
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center gap-2 text-frost/50 light:text-navy/50">
@@ -111,24 +180,51 @@ export default function CaseDetail() {
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">{caseData.caseId}</p>
           <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">{caseData.name}</h1>
-          <p className="mt-1 text-sm text-frost/50 light:text-navy/50">Current In-Charge: {caseData.currentInCharge?.name || 'Unassigned'}</p>
+          <p className="mt-1 text-sm text-frost/50 light:text-navy/50">
+            Allotted To: {caseData.allottedTo && caseData.allottedTo.length > 0 ? caseData.allottedTo.join(', ') : 'Unassigned'}
+          </p>
         </div>
         
-        {canChangeStatus ? (
-          <select 
-            value={caseData.status} 
-            onChange={handleStatusChange}
-            className={`rounded-xl px-3 py-2 text-sm outline-none cursor-pointer border border-white/10 light:border-navy/10 ${STATUS_STYLE[caseData.status] || STATUS_STYLE.Pending}`}
-          >
-            <option value="Pending" className="bg-navy text-white">Pending</option>
-            <option value="Active" className="bg-navy text-white">Active</option>
-            <option value="Closed" className="bg-navy text-white">Closed</option>
-          </select>
-        ) : (
-          <span className={`rounded-full px-3 py-1 text-sm uppercase ${STATUS_STYLE[caseData.status] || STATUS_STYLE.Pending}`}>
-            {caseData.status}
-          </span>
-        )}
+        <div className="flex flex-col items-end gap-3">
+          {canChangeStatus ? (
+            <select 
+              value={caseData.status} 
+              onChange={handleStatusChange}
+              className={`rounded-xl px-3 py-2 text-sm outline-none cursor-pointer border border-white/10 light:border-navy/10 ${STATUS_STYLE[caseData.status] || STATUS_STYLE.Pending}`}
+            >
+              <option value="Pending" className="bg-navy text-white">Pending</option>
+              <option value="Active" className="bg-navy text-white">Active</option>
+              <option value="Closed" className="bg-navy text-white">Closed</option>
+            </select>
+          ) : (
+            <span className={`rounded-full px-3 py-1 text-sm uppercase ${STATUS_STYLE[caseData.status] || STATUS_STYLE.Pending}`}>
+              {caseData.status}
+            </span>
+          )}
+
+          <div className="flex gap-2">
+            {user?.position === 'CBI' && (
+              <button 
+                onClick={openAssignModal}
+                className="rounded-lg bg-white/10 light:bg-navy/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20 light:bg-navy/20 transition-colors flex items-center gap-2"
+              >
+                <FiUserPlus /> Assign Case
+              </button>
+            )}
+
+            {caseData.status === 'Closed' && (user?.position === 'Judge' || user?.position === 'CBI') && (
+              <button 
+                onClick={handleReopenCase} 
+                disabled={isReopening}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                  isReopening ? 'bg-orange-500/50 text-white cursor-not-allowed' : 'bg-orange-500 text-white hover:bg-orange-600 shadow-md shadow-orange-500/20'
+                }`}
+              >
+                {isReopening ? 'Reopening...' : 'Reopen Case'}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="glass rounded-2xl p-6">
@@ -196,6 +292,86 @@ export default function CaseDetail() {
           </div>
         )}
       </div>
+
+      {/* Assign Case Modal */}
+      <AnimatePresence>
+        {showAssignModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass rounded-2xl w-full max-w-lg p-6 max-h-[85vh] flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold">Assign Officers</h3>
+                <button onClick={() => setShowAssignModal(false)} className="text-frost/50 hover:text-white">
+                  <FiX size={24} />
+                </button>
+              </div>
+
+              <div className="relative mb-4">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-frost/40" />
+                <input
+                  type="text"
+                  placeholder="Search by name or position..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm outline-none focus:border-cyan/50"
+                />
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 min-h-[250px] space-y-2">
+                {loadingUsers ? (
+                  <div className="flex h-full items-center justify-center text-frost/50">
+                    <FiLoader className="animate-spin mr-2" /> Fetching officers...
+                  </div>
+                ) : filteredUsers.length > 0 ? (
+                  filteredUsers.map(u => (
+                    <label 
+                      key={u._id} 
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                        selectedUsers.includes(u.name) 
+                          ? 'border-cyan/50 bg-cyan/10' 
+                          : 'border-white/5 bg-white/5 hover:border-white/20'
+                      }`}
+                    >
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-cyan"
+                        checked={selectedUsers.includes(u.name)}
+                        onChange={() => toggleUserSelection(u.name)}
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium">{u.name}</p>
+                        <p className="text-xs text-frost/50">{u.position} • {u.role}</p>
+                      </div>
+                    </label>
+                  ))
+                ) : (
+                  <div className="text-center text-frost/50 mt-10">No users found</div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-white/10">
+                <button 
+                  onClick={() => setShowAssignModal(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleAssignSubmit}
+                  disabled={assigning}
+                  className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue to-cyan px-6 py-2 text-sm font-medium text-navy transition-opacity disabled:opacity-50"
+                >
+                  {assigning ? <><FiLoader className="animate-spin" /> Assigning...</> : 'Assign Selected Officers'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Real backend connection (Step 1-2 of the build plan: auth is live).
-// Blockchain calls further down are still mocked until Step 5.
+// Real backend connection fully integrated.
+// Authentication, Blockchain, and AI Anomaly endpoints are live.
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
@@ -12,16 +12,19 @@ export async function registerUser({ name, email, password, position, role }) {
   return res.data;
 }
 
-export async function loginUser({ name, position, role, email, password }) {
-  const res = await client.post('/auth/login', { name, position, role, email, password });
+export async function loginUser({ email, password }) {
+  const res = await client.post('/auth/login', { email, password });
   return res.data; // { message, token, user }
 }
 
 // ---- REAL: Evidence (protected, needs a token) ----
-export async function uploadEvidence({ caseId, category, fileName, fileHash, file }, token) {
+export async function uploadEvidence({ caseId, category, title, description, collectedDate, fileName, fileHash, file }, token) {
   const formData = new FormData();
   formData.append('caseId', caseId);
   formData.append('category', category);
+  if (title) formData.append('title', title);
+  if (description) formData.append('description', description);
+  if (collectedDate) formData.append('collectedDate', collectedDate);
   formData.append('fileName', fileName);
   formData.append('fileHash', fileHash);
   formData.append('file', file);
@@ -46,6 +49,13 @@ export async function listCases(token) {
   return res.data;
 }
 
+export async function createCase(caseId, name, token) {
+  const res = await client.post('/cases', { caseId, name }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+
 export async function getCase(id, token) {
   const res = await client.get(`/cases/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -60,8 +70,29 @@ export async function getCaseDetails(caseId, token) {
   return res.data;
 }
 
+export async function getUsers(token) {
+  const res = await client.get('/auth/users', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+
+export async function assignCase(caseId, allottedTo, token) {
+  const res = await client.put(`/cases/${caseId}/assign`, { allottedTo }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+
 export async function updateCaseStatus(caseId, status, token) {
   const res = await client.put(`/cases/${caseId}/status`, { status }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+
+export async function reopenCase(caseId, token) {
+  const res = await client.put(`/cases/${caseId}/reopen`, {}, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data;
@@ -120,14 +151,24 @@ export async function viewEvidence(evidenceDbId, token) {
   setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
 }
 
-const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-export async function mockUploadToBlockchain(hash) {
-  await delay(1400);
-  return {
-    txHash: `0x${hash.slice(0, 8)}...${hash.slice(-6)}`,
-    contract: '0x8B3f...C29e',
-    block: Math.floor(4_800_000 + Math.random() * 5000),
-    timestamp: new Date().toISOString(),
-  };
+// ---- REAL: Chain of Custody (blockchain) ----
+export async function getCustodyTimeline(caseId, token) {
+  const res = await client.get(`/cases/${caseId}/custody`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 }
+
+// ---- REAL: AI Anomaly Detection ----
+export async function getAnomalies(token, filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.date) params.append('date', filters.date);
+  if (filters.role) params.append('role', filters.role);
+  if (filters.rule) params.append('rule', filters.rule);
+
+  const res = await client.get(`/ai/anomalies?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+

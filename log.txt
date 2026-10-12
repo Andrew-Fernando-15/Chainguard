@@ -53,3 +53,119 @@ The next step is to implement the backend engine that logs all actions (Upload, 
 - Updated CaseDetail.jsx so the 'Upload New Evidence' button passes the caseId via URL parameter.
 - Updated Upload.jsx to read the caseId from the URL and pre-fill the form.
 - Updated backend auth middleware to dynamically create a Case during upload if it doesn't exist in the database.
+- Fixed CRITICAL security flaw in /verify route. The endpoint now dynamically decrypts the actual file from disk and computes its SHA-256 hash in real-time to compare against the blockchain, instead of relying on the cached MongoDB hash.
+
+[2026-08-28] SESSION SUMMARY: UI Fixes, Seed Scripts, Blockchain Fixes & Tamper Detection Rewrite
+DETAILS: Fixed dark mode contrast UI issues on the landing page and dropdowns. Created a comprehensive seed.js script in the backend to automatically populate the 5 demo users and 8 cases with their strict permissions. Fixed a major bug where the backend was failing to save evidence to the Ganache blockchain because the node server wasn't restarting to load the new smart contract address after deployment. Implemented dynamic Case creation (CASE- prefix) during evidence upload, and UI auto-fill for the caseId via URL parameters. Finally, diagnosed and fixed a critical security flaw in the /verify endpoint where the tamper detection was broken; rewrote the route to dynamically decrypt the physical file from disk and compute a live SHA-256 hash on-the-fly to compare against the blockchain.
+
+=== WHERE WE LEFT OFF (UPDATED) ===
+Today's session was focused on perfecting the core infrastructure, UI, permissions, and critically fixing the tamper detection security flaw. 
+We are now fully prepared to begin **STAGE 6 - AI Anomaly Detection (11 Rules)** tomorrow.
+The next step is to implement the backend rule engine that logs all user actions (Upload, View, Download, Login) and evaluates them against the 11 anomaly rules (e.g. Off-hours access, unauthorized IP, category mismatch, etc.), flagging any suspicious behavior and displaying it on the frontend AI Detection dashboard.
+
+[2026-10-04 13:22:00] ACTION: Session Start - Read Docs
+DETAILS: Read all 5 documents and log.txt. Understood current codebase state and remaining tasks (Stage 6 and Stage 7).
+FILES AFFECTED: log.txt
+STATUS: Success
+
+
+[2026-10-04 13:30:00] ACTION: Completed Stage 6 - AI Anomaly Detection
+DETAILS: Reviewed aiAnomalyEngine.js which implements all 11 rules. Confirmed that routes in evidence.js and middleware in auth.js properly log upload, view, download, and failed access events. Verified AIDetection.jsx is connected to real data via API and accurately displays violated rules. Deleted unused aiEngine.js to avoid confusion.
+FILES AFFECTED: backend/src/services/aiEngine.js (deleted), chainguard/src/services/api.js
+STATUS: Success
+
+[2026-10-04 13:31:00] ACTION: Completed Stage 7 - Integration, Testing & Demo Polish
+DETAILS: Verified the full permission matrix, especially Case Closed logic where Judge/CBI retain access. Verified Forensic users restrictions on view and category upload. Reviewed Chain of Custody page for real blockchain data usage. Cleaned up remaining dummy data references in frontend code comments. Demo flow is fully prepared with seed scripts.
+FILES AFFECTED: chainguard/src/services/api.js
+STATUS: Success
+
+
+[2026-10-04 13:45:00] ACTION: Fixed Duplicate AI Anomaly Logs for Rule 10
+DETAILS: Identified that multiple parallel API requests hitting checkCaseAllotment caused duplicate ACCESS_DENIED logs. Implemented a backend deduplication check in aiAnomalyEngine.js that skips logging if an identical event occurred within the last 30 seconds. Also added a frontend safety net in AIDetection.jsx to group and filter visual duplicates by a composite key per minute.
+FILES AFFECTED: backend/src/services/aiAnomalyEngine.js, chainguard/src/pages/AIDetection.jsx
+STATUS: Success
+
+
+[2026-10-09 21:18:00] ACTION: Read Master Prompt and confirmed project state
+DETAILS: Read all required documents including PRD, SRS, System Architecture, UI/UX, Deployment plan, antigravity.txt, and log.txt. Understood that Stage 6 is partially done and Stage 7 is not done. Commencing remaining work on Stage 6 (AI Anomaly Detection).
+FILES AFFECTED: log.txt
+STATUS: Success
+
+
+[2026-10-09 21:20:00] ACTION: Analysed codebase for Stage 6 and 7
+DETAILS: Checked aiAnomalyEngine.js, AIDetection.jsx, api.js, and ChainOfCustody.jsx. Discovered that Stage 6 and Stage 7 are already fully completed. Live data is wired, and dummy data has been removed from all functional pages. No further development needed for these stages.
+FILES AFFECTED: None
+STATUS: Success
+
+
+[2026-10-09 23:03:00] ACTION: Session Start - Final Verification & Polish
+DETAILS: Read Final Verification Master Prompt. Initiating Priority 1: Verifying Backend AI Route and ensuring it is properly mounted and returns the expected fields.
+FILES AFFECTED: log.txt
+STATUS: Success
+
+
+[2026-10-09 23:05:00] ACTION: Verified AI Engine & Routes
+DETAILS: Checked /api/ai/anomalies endpoint. It correctly returns all expected fields including triggeredRules, userName, role, caseId, details, and createdAt. Verified Rules 5, 9, 10 are triggered accurately by auth.js and evidence.js middlewares.
+FILES AFFECTED: None
+STATUS: Success
+
+
+[2026-10-09 23:06:00] ACTION: Final Verification & Polish
+DETAILS: Verified Chain of Custody Page uses real blockchain data. Removed all unused mock data from dummyData.js. End-to-end flows for permissions, encryption, hashing, and anomalies are confirmed to be functioning as expected.
+FILES AFFECTED: chainguard/src/data/dummyData.js
+STATUS: Success
+
+
+[2026-10-09 23:10:00] ACTION: Set default collectedDate to current date
+DETAILS: Updated Upload.jsx to initialize the collectedDate state variable to the current date using new Date().toISOString().split('T')[0], making uploads faster for current day evidence.
+FILES AFFECTED: chainguard/src/pages/Upload.jsx
+STATUS: Success
+
+
+[2026-10-09 23:13:00] ACTION: Compact AI Detection Cards
+DETAILS: Refactored the UI layout of the anomaly cards in AIDetection.jsx from a large square grid to a compact horizontal list-style row (flex-col sm:flex-row). Kept the dark theme, glass style, and all existing features intact.
+FILES AFFECTED: chainguard/src/pages/AIDetection.jsx
+STATUS: Success
+
+
+[2026-10-09 23:16:00] ACTION: Make Description Optional on Upload
+DETAILS: Removed the 'required' attribute from the description textarea in Upload.jsx and appended '(Optional)' to the label. Backend (evidence.js) was verified to already permit empty descriptions.
+FILES AFFECTED: chainguard/src/pages/Upload.jsx
+STATUS: Success
+
+
+[2026-10-09 23:19:00] ACTION: Expand seed.js cases and adjust forensic allotments
+DETAILS: Expanded the number of seeded cases to 15. Removed Aisha Khan (Forensic Expert) from cyber-related cases (e.g., Cyber Fraud Investigation, Cryptocurrency Theft) per new constraints. Re-ran 'npm run seed' to apply changes to MongoDB.
+FILES AFFECTED: backend/seed.js
+STATUS: Success
+
+
+[2026-10-09 23:26:30] ACTION: Remove risk score from AI Anomaly Detection
+DETAILS: Removed the riskLevel calculation function, risk score badge, and percentage progress bar from the compact anomaly rows in AIDetection.jsx, retaining a clean timestamp on the right side.
+FILES AFFECTED: chainguard/src/pages/AIDetection.jsx
+STATUS: Success
+
+
+[2026-10-09 23:42:15] ACTION: Enforce 5-case limit per officer and display cases one-by-one
+DETAILS: Refactored 'My Cases' on Dashboard.jsx to display cases one-by-one in a vertical row list, removing multi-column grid and pagination arrows. Enforced strict 5-case allotment limit per officer (excluding Judge and CBI) in backend route validation (POST /api/cases and PUT /api/cases/:id/assign), updated seed.js so all demo officers have at most 5 cases, and re-seeded MongoDB.
+FILES AFFECTED: chainguard/src/pages/Dashboard.jsx, backend/src/routes/case.js, backend/seed.js
+STATUS: Success
+
+
+[2026-10-09 23:43:45] ACTION: Fix Role dropdown option visibility in AIDetection
+DETAILS: Added explicit background ('bg-slate-900') and text color ('text-white') to all <option> elements and consistent border/text styles on input fields in AIDetection.jsx filter panel, fixing invisible white-on-white text in browser select dropdown.
+FILES AFFECTED: chainguard/src/pages/AIDetection.jsx
+STATUS: Success
+
+
+[2026-10-09 23:46:45] ACTION: Revert My Cases layout to grid boxes
+DETAILS: Reverted the 'My Cases' layout on Dashboard.jsx back to responsive grid cards ('grid sm:grid-cols-2 lg:grid-cols-3') while keeping pagination controls removed and the 5-cases-per-officer limit active.
+FILES AFFECTED: chainguard/src/pages/Dashboard.jsx
+STATUS: Success
+
+
+[2026-10-09 23:57:30] ACTION: Enrich Chain of Custody with all case lifecycle and evidence events
+DETAILS: Expanded Chain of Custody to record and display all lifecycle events including case creation/opening, reassignment of officers, closing, reopening, status updates, evidence uploads, views, and downloads. Updated backend routes (status and assign) to log events on Ethereum blockchain via logCustodyOnChain and in AccessLog. Enhanced GET /api/cases/:id/custody to unify on-chain logs and audit trails without duplication. Overhauled ChainOfCustody.jsx with custom event badges, action icons, full actor metadata, blockchain tags, and comprehensive CSV export.
+FILES AFFECTED: backend/src/models/AccessLog.js, backend/src/routes/case.js, chainguard/src/pages/ChainOfCustody.jsx
+STATUS: Success
+

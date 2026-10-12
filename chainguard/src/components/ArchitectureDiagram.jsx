@@ -39,7 +39,7 @@ export default function ArchitectureDiagram() {
         return (
           <motion.line
             key={i}
-            x1={a.x} y1={a.y + 22}
+            x1={a.x} y1={a.y + 44}
             x2={b.x} y2={b.y}
             stroke="url(#edgeGrad)"
             strokeWidth="2"

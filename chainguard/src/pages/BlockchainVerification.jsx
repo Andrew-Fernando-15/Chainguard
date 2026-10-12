@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiCheckCircle, FiXCircle, FiLoader } from 'react-icons/fi';
+import { FiSearch, FiCheckCircle, FiXCircle, FiLoader, FiUser, FiLink } from 'react-icons/fi';
 import { verifyEvidence } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -29,7 +29,7 @@ export default function BlockchainVerification() {
     <div className="mx-auto max-w-3xl px-5 py-12 lg:px-8">
       <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">Verify</p>
       <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">Blockchain Verification</h1>
-      <p className="mt-1 text-sm text-frost/50 light:text-navy/50">Confirm a piece of evidence hasn't been altered by comparing the database record against the blockchain.</p>
+      <p className="mt-1 text-sm text-frost/50 light:text-navy/50">Confirm a piece of evidence hasn't been altered by comparing the database record against the smart contract on Ganache.</p>
 
       <form onSubmit={handleVerify} className="mt-8 space-y-6">
         <div className="glass flex gap-3 rounded-2xl p-3">
@@ -64,7 +64,7 @@ export default function BlockchainVerification() {
                   <FiCheckCircle className="text-2xl text-green" />
                   <div>
                     <p className="font-semibold text-green">Hash Match Confirmed</p>
-                    <p className="text-xs text-frost/50 light:text-navy/50">This evidence is intact and unaltered on Ganache.</p>
+                    <p className="text-xs text-frost/50 light:text-navy/50">This evidence is intact and unaltered on the blockchain.</p>
                   </div>
                 </>
               ) : (
@@ -72,7 +72,7 @@ export default function BlockchainVerification() {
                   <FiXCircle className="text-2xl text-red-400" />
                   <div>
                     <p className="font-semibold text-red-400">Hash Mismatch Detected</p>
-                    <p className="text-xs text-frost/50 light:text-navy/50">This physical file does not match the smart contract record.</p>
+                    <p className="text-xs text-frost/50 light:text-navy/50">This physical file does not match the smart contract record — potential tampering.</p>
                   </div>
                 </>
               )}
@@ -85,6 +85,35 @@ export default function BlockchainVerification() {
               <DetailRow label="Timestamp" value={result.timestamp} />
               <DetailRow label="Smart Contract Address" value={result.contract} />
             </div>
+
+            {/* Custody Log Section */}
+            {result.custodyLog && result.custodyLog.length > 0 && (
+              <div className="mt-6 border-t border-white/5 light:border-navy/5 pt-4">
+                <h3 className="font-semibold text-sm mb-3">On-Chain Custody Log</h3>
+                <div className="space-y-2">
+                  {result.custodyLog.map((entry, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="flex items-start gap-3 rounded-lg bg-white/5 light:bg-navy/5 p-3"
+                    >
+                      <FiUser className="text-cyan mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 text-xs">
+                        <p className="text-frost/70 light:text-navy/70 font-medium">{entry.action}</p>
+                        <div className="mt-1 flex flex-wrap gap-3 text-frost/40 light:text-navy/40">
+                          <span className="flex items-center gap-1">
+                            <FiLink className="text-cyan" /> {entry.actor?.slice(0, 10)}...{entry.actor?.slice(-6)}
+                          </span>
+                          <span>{new Date(entry.timestamp * 1000).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

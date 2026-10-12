@@ -9,15 +9,8 @@ const caseSchema = new mongoose.Schema(
       enum: ['Pending', 'Active', 'Closed'],
       default: 'Pending',
     },
-    currentInCharge: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    previousInCharges: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      }
+    allottedTo: [
+      { type: String, trim: true, index: true }
     ],
   },
   { timestamps: true }

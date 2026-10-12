@@ -3,15 +3,19 @@ import mongoose from 'mongoose';
 const accessLogSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    evidenceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Evidence' }, // Optional, as some actions might just be case-level or failed attempts before evidence is known
-    caseId: { type: String, trim: true },
+    userName: { type: String },
+    role: { type: String },
     action: {
       type: String,
-      enum: ['upload', 'view', 'download', 'failed_access'],
+      enum: ['UPLOAD', 'VIEW', 'DOWNLOAD', 'ACCESS_DENIED', 'CASE_OPENED', 'CASE_REOPENED', 'CASE_CLOSED', 'CASE_ASSIGNED', 'STATUS_CHANGED'],
       required: true,
     },
+    caseId: { type: String, trim: true },
+    evidenceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Evidence' },
+    ipAddress: { type: String },
     suspiciousFlag: { type: Boolean, default: false },
-    reason: { type: String }, // Describes which rule was broken
+    triggeredRules: [{ type: String }],
+    details: { type: String },
     blockchainTxHash: { type: String, default: null },
   },
   { timestamps: true }

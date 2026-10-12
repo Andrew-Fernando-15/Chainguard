@@ -5,10 +5,11 @@ import path from 'path';
 import fs from 'fs';
 import Evidence from '../models/Evidence.js';
 import User from '../models/User.js';
+import Case from '../models/Case.js';
 import { verifyToken, checkCaseAllotment } from '../middleware/auth.js';
-import { addEvidenceOnChain, verifyEvidenceOnChain, getEvidenceInfoOnChain } from '../services/blockchain.js';
+import { addEvidenceOnChain, verifyEvidenceOnChain, getEvidenceInfoOnChain, logCustodyOnChain } from '../services/blockchain.js';
 import { getEncryptStream, getDecryptStream } from '../utils/crypto.js';
-import { logAndAnalyze } from '../services/aiEngine.js';
+import { logActivity } from '../services/aiAnomalyEngine.js';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/temp/' });
@@ -17,7 +18,7 @@ router.use(verifyToken);
 
 router.post('/upload', upload.single('file'), checkCaseAllotment, async (req, res) => {
   try {
-    const { caseId, category, fileName, fileHash } = req.body;
+    const { caseId, category, title, description, collectedDate, fileName, fileHash } = req.body;
     if (!caseId || !category || !fileName || !fileHash || !req.file) {
       if (req.file) fs.unlinkSync(req.file.path);
       return res.status(400).json({ error: 'caseId, category, fileName, fileHash, and file are required' });
@@ -36,7 +37,7 @@ router.post('/upload', upload.single('file'), checkCaseAllotment, async (req, re
       ];
       if (!forensicCats.includes(category)) {
         if (req.file) fs.unlinkSync(req.file.path);
-        await logAndAnalyze(user._id, 'failed_access', { caseId, reason: 'Rule 9: Category not allowed for Position+Role' });
+        await logActivity({ user, action: 'ACCESS_DENIED', caseId, details: 'Rule 9: Category not allowed for Position+Role', req });
         return res.status(403).json({ error: 'Forensic users can only upload forensic category evidence' });
       }
     }
@@ -58,6 +59,9 @@ router.post('/upload', upload.single('file'), checkCaseAllotment, async (req, re
         const evidence = await Evidence.create({
           caseId,
           category,
+          title,
+          description,
+          collectedDate,
           fileName,
           fileHash,
           uploadedBy: req.user.id,
@@ -66,12 +70,15 @@ router.post('/upload', upload.single('file'), checkCaseAllotment, async (req, re
           iv: ivHex
         });
 
-        await logAndAnalyze(req.user.id, 'upload', {
+        await logActivity({
+          user,
+          action: 'UPLOAD',
           caseId,
           evidenceId: evidence._id,
           fileName,
           fileHash,
-          fileSize: req.file.size
+          fileSize: req.file.size,
+          req
         });
 
         let chainInfo = null;
@@ -108,8 +115,9 @@ router.get('/', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'User not found' });
 
     let query = {};
-    if (user.position !== 'CBI') {
-      const allottedCaseIds = user.allottedCases.map(id => id.toString());
+    if (user.position !== 'CBI' && user.position !== 'Judge') {
+      const allottedCases = await Case.find({ allottedTo: user.name });
+      const allottedCaseIds = allottedCases.map(c => c.caseId);
       query = { caseId: { $in: allottedCaseIds } };
     }
 
@@ -130,7 +138,8 @@ router.get('/:id', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'User not found' });
 
     if (user.position !== 'CBI') {
-      const isAllotted = user.allottedCases.some(id => id.toString() === item.caseId.toString());
+      const caseDoc = await Case.findOne({ caseId: item.caseId });
+      const isAllotted = caseDoc && caseDoc.allottedTo.includes(user.name);
       if (!isAllotted) {
         return res.status(403).json({ error: 'You are not allowed to access any data in this case' });
       }
@@ -152,15 +161,16 @@ router.get('/download/:id', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'User not found' });
 
     if (user.position !== 'CBI') {
-      const isAllotted = user.allottedCases.some(id => id.toString() === item.caseId.toString());
+      const caseDoc = await Case.findOne({ caseId: item.caseId });
+      const isAllotted = caseDoc && caseDoc.allottedTo.includes(user.name);
       if (!isAllotted) {
-        await logAndAnalyze(user._id, 'failed_access', { caseId: item.caseId, evidenceId: item._id, reason: 'Rule 5: Access to non-allotted case' });
+        await logActivity({ user, action: 'ACCESS_DENIED', caseId: item.caseId, evidenceId: item._id, details: 'Rule 5: Access to non-allotted case', req });
         return res.status(403).json({ error: 'You are not allowed to access any data in this case' });
       }
     }
 
     if (user.position === 'Forensic') {
-      await logAndAnalyze(user._id, 'failed_access', { caseId: item.caseId, evidenceId: item._id, reason: 'Rule 9: Forensic users cannot download' });
+      await logActivity({ user, action: 'ACCESS_DENIED', caseId: item.caseId, evidenceId: item._id, details: 'Rule 9: Forensic users cannot download', req });
       return res.status(403).json({ error: 'Forensic users are restricted to View only. Downloading is forbidden.' });
     }
 
@@ -171,7 +181,12 @@ router.get('/download/:id', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${item.fileName}"`);
     res.setHeader('Content-Type', 'application/octet-stream');
 
-    await logAndAnalyze(user._id, 'download', { caseId: item.caseId, evidenceId: item._id });
+    await logActivity({ user, action: 'DOWNLOAD', caseId: item.caseId, evidenceId: item._id, req });
+
+    // Log custody event on blockchain if evidence has an on-chain record
+    if (item.blockchainEvidenceId != null) {
+      logCustodyOnChain(item.blockchainEvidenceId, `downloaded by ${user.name} (${user.position})`).catch(() => {});
+    }
 
     const readStream = fs.createReadStream(item.filePath);
     const decryptStream = getDecryptStream(item.iv);
@@ -192,9 +207,10 @@ router.get('/view/:id', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'User not found' });
 
     if (user.position !== 'CBI') {
-      const isAllotted = user.allottedCases.some(id => id.toString() === item.caseId.toString());
+      const caseDoc = await Case.findOne({ caseId: item.caseId });
+      const isAllotted = caseDoc && caseDoc.allottedTo.includes(user.name);
       if (!isAllotted) {
-        await logAndAnalyze(user._id, 'failed_access', { caseId: item.caseId, evidenceId: item._id, reason: 'Rule 5: Access to non-allotted case' });
+        await logActivity({ user, action: 'ACCESS_DENIED', caseId: item.caseId, evidenceId: item._id, details: 'Rule 5: Access to non-allotted case', req });
         return res.status(403).json({ error: 'You are not allowed to access any data in this case' });
       }
     }
@@ -215,7 +231,12 @@ router.get('/view/:id', async (req, res) => {
 
     res.setHeader('Content-Type', mimeType);
 
-    await logAndAnalyze(user._id, 'view', { caseId: item.caseId, evidenceId: item._id });
+    await logActivity({ user, action: 'VIEW', caseId: item.caseId, evidenceId: item._id, req });
+
+    // Log custody event on blockchain if evidence has an on-chain record
+    if (item.blockchainEvidenceId != null) {
+      logCustodyOnChain(item.blockchainEvidenceId, `viewed by ${user.name} (${user.position})`).catch(() => {});
+    }
 
     const readStream = fs.createReadStream(item.filePath);
     const decryptStream = getDecryptStream(item.iv);
@@ -264,6 +285,10 @@ router.post('/verify', async (req, res) => {
     const match = await verifyEvidenceOnChain(evidence.blockchainEvidenceId, hashToCheck);
     const info = await getEvidenceInfoOnChain(evidence.blockchainEvidenceId);
     
+    // Fetch the full custody log from the blockchain
+    const { getCustodyLogFromChain } = await import('../services/blockchain.js');
+    const custodyLog = await getCustodyLogFromChain(evidence.blockchainEvidenceId) || [];
+
     // Read contract address directly from JSON if needed, or just rely on the UI
     let contractAddr = 'See deployed-contract.json';
     try {
@@ -278,6 +303,7 @@ router.post('/verify', async (req, res) => {
       txHash: evidence.blockchainTxId,
       timestamp: info ? new Date(Number(info[3]) * 1000).toLocaleString() : 'N/A',
       contract: contractAddr,
+      custodyLog,
     });
   } catch (err) {
     res.status(500).json({ error: 'Verification failed', details: err.message });

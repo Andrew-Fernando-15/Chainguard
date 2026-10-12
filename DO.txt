@@ -1,0 +1,38 @@
+CHAINGUARD - PROJECT TO-DO LIST
+---------------------------------
+Here is the list of remaining tasks needed to finalize the project, ordered by priority (1 = Low, 6 = Highest).
+
+[PRIORITY 6] - Judge and CBI to activate the Closed case
+• Add functionality for users with Judge or CBI roles to reopen/activate a Case that has been marked as "Closed".
+• Ensure appropriate logging and AI engine notifications for this critical action.
+
+[PRIORITY 5] - End-to-End System Integration Testing
+• Test the complete flow: Login -> Open Case -> Upload Evidence -> Verify Blockchain TX -> Download/Decrypt Evidence.
+• Fix any bugs or API failures that occur during this core flow.
+• Verify that Ganache is successfully recording every transaction without errors.
+
+[PRIORITY 5] - Security & Access Control Audit
+• Strictly verify that the Permission Matrix (from SRS) works perfectly.
+• Ensure Investigating Officers cannot see unassigned cases.
+• Ensure Forensics can only view (not download) allowed categories.
+• Ensure when a Case Status is changed to "Closed", access is immediately revoked for Police/Forensic, leaving only Judge/CBI.
+
+[PRIORITY 4] - AI Anomaly Engine Validation
+• Manually test all 11 AI rules to ensure they trigger and log correctly.
+• Example: Try to upload a file with a duplicate hash, or try to access the system between 12 AM and 5 AM.
+• Ensure these AI flags are visible in the frontend dashboard.
+
+[PRIORITY 3] - UI / UX Final Polish
+• Add loading spinners/states when waiting for Blockchain transactions or file encryption.
+• Ensure all API error messages (like "Access Denied") are shown as user-friendly toast notifications instead of silent console errors.
+• Verify the application looks good on standard laptop screen sizes.
+
+[PRIORITY 2] - Code Cleanup & Error Handling
+• Remove debugging `console.log()` statements from the frontend and backend.
+• Ensure all `catch` blocks in the backend return proper HTTP status codes (403, 404, 500) rather than crashing the server.
+• Format the code and remove unused imports.
+
+[PRIORITY 1] - Documentation & Presentation Prep
+• Finalize the README.md with clear instructions on how to start the app (npm run dev, ganache setup, mongo setup).
+• Prepare a specific "Demo Script" outlining exactly what buttons to click to show the teacher the best features (e.g., showing a blocked access attempt, showing a successful blockchain upload).
+• Prepare the final slide deck summarizing the Architecture, Tech Stack, and PRD.
