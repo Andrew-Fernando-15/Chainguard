@@ -12,6 +12,7 @@ const accessLogSchema = new mongoose.Schema(
     },
     caseId: { type: String, trim: true },
     evidenceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Evidence' },
+    fileName: { type: String },
     ipAddress: { type: String },
     suspiciousFlag: { type: Boolean, default: false },
     triggeredRules: [{ type: String }],

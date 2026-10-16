@@ -121,24 +121,37 @@ body {
 }
 
 /* Light theme override */
-html.light body {
+html.light, .light {
+  --color-cyan: #2563EB;
+}
+
+html.light body, .light body {
   background-color: var(--color-frost);
   color: var(--color-navy);
 }
-html.light .glass {
+html.light .glass, .light .glass {
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(15, 23, 42, 0.12);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
-html.light .glass-strong {
+html.light .glass-strong, .light .glass-strong {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(15, 23, 42, 0.18);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
-html.light .grid-bg {
+html.light .grid-bg, .light .grid-bg {
   background-image:
     linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+}
+html.light .text-gradient, .light .text-gradient {
+  background: linear-gradient(90deg, #1D4ED8, #2563EB);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+html.light .chain-line, .light .chain-line {
+  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.5), transparent);
 }
 
 .skeleton {

@@ -1,11 +1,34 @@
 import AccessLog from '../models/AccessLog.js';
 import Evidence from '../models/Evidence.js';
 
+// In-memory debounce cache to prevent concurrent race condition duplicates
+const recentLogsCache = new Map();
+
+// Periodic cleanup of cache every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamp] of recentLogsCache.entries()) {
+    if (now - timestamp > 60000) {
+      recentLogsCache.delete(key);
+    }
+  }
+}, 5 * 60 * 1000).unref();
+
 export async function logActivity({ user, action, caseId, evidenceId, ipAddress, details = '', fileHash, fileSize, fileName }) {
   try {
     let isSuspicious = false;
     const triggeredRules = [];
     const act = action.toUpperCase();
+    const userIdStr = String(user?._id || user?.id || 'unknown');
+
+    // Debounce check for rapid repeated actions (e.g. concurrent requests 10ms apart)
+    const dedupeKey = `${userIdStr}:${act}:${caseId || ''}:${evidenceId || ''}:${details}`;
+    const now = Date.now();
+    const lastSeen = recentLogsCache.get(dedupeKey);
+    if (lastSeen && (now - lastSeen) < 30000) {
+      return null;
+    }
+    recentLogsCache.set(dedupeKey, now);
 
     // 1. Hash mismatch
     // 2. Abnormal file size change
@@ -13,7 +36,9 @@ export async function logActivity({ user, action, caseId, evidenceId, ipAddress,
     // 11. Duplicate SHA-256 upload
     if (act === 'UPLOAD') {
       if (fileHash) {
-        const existingHash = await Evidence.findOne({ fileHash });
+        const query = { fileHash };
+        if (evidenceId) query._id = { $ne: evidenceId };
+        const existingHash = await Evidence.findOne(query);
         if (existingHash) {
           isSuspicious = true;
           triggeredRules.push('Rule 11: Duplicate SHA-256 upload');
@@ -21,7 +46,9 @@ export async function logActivity({ user, action, caseId, evidenceId, ipAddress,
       }
 
       if (fileName && caseId) {
-        const previousUploads = await Evidence.find({ caseId, fileName }).sort({ createdAt: -1 });
+        const query = { caseId, fileName };
+        if (evidenceId) query._id = { $ne: evidenceId };
+        const previousUploads = await Evidence.find(query).sort({ createdAt: -1 });
         if (previousUploads.length > 0) {
           const lastUpload = previousUploads[0];
           
@@ -103,19 +130,18 @@ export async function logActivity({ user, action, caseId, evidenceId, ipAddress,
       }
     }
 
-    if (act === 'ACCESS_DENIED') {
-      const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
-      const recentDuplicate = await AccessLog.findOne({
-        userId: user._id || user.id,
-        action: act,
-        caseId: caseId,
-        details: details,
-        createdAt: { $gte: thirtySecondsAgo }
-      });
+    // Database deduplication check (prevent duplicate within 30 seconds)
+    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
+    const recentDuplicate = await AccessLog.findOne({
+      userId: user._id || user.id,
+      action: act,
+      caseId: caseId,
+      details: details,
+      createdAt: { $gte: thirtySecondsAgo }
+    });
 
-      if (recentDuplicate) {
-        return recentDuplicate;
-      }
+    if (recentDuplicate) {
+      return recentDuplicate;
     }
 
     const logEntry = await AccessLog.create({
@@ -125,6 +151,7 @@ export async function logActivity({ user, action, caseId, evidenceId, ipAddress,
       action: act,
       caseId,
       evidenceId,
+      fileName,
       ipAddress,
       suspiciousFlag: isSuspicious,
       triggeredRules,

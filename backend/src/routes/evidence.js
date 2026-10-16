@@ -16,17 +16,51 @@ const upload = multer({ dest: 'uploads/temp/' });
 
 router.use(verifyToken);
 
-router.post('/upload', upload.single('file'), checkCaseAllotment, async (req, res) => {
+// Encrypt a single file and save it to uploads/
+function encryptFileAsync(tempPath) {
+  return new Promise((resolve, reject) => {
+    const ivHex = crypto.randomBytes(16).toString('hex');
+    const finalFilePath = path.join('uploads', `${Date.now()}_${ivHex}.enc`);
+    const readStream = fs.createReadStream(tempPath);
+    const encryptStream = getEncryptStream(ivHex);
+    const writeStream = fs.createWriteStream(finalFilePath);
+
+    readStream.pipe(encryptStream).pipe(writeStream);
+
+    writeStream.on('finish', () => {
+      try {
+        fs.unlinkSync(tempPath);
+      } catch (err) {}
+      resolve({ finalFilePath, ivHex });
+    });
+
+    writeStream.on('error', (err) => {
+      try {
+        fs.unlinkSync(tempPath);
+      } catch (e) {}
+      reject(err);
+    });
+  });
+}
+
+router.post('/upload', upload.any(), checkCaseAllotment, async (req, res) => {
+  const uploadedFiles = req.files || [];
   try {
-    const { caseId, category, title, description, collectedDate, fileName, fileHash } = req.body;
-    if (!caseId || !category || !fileName || !fileHash || !req.file) {
-      if (req.file) fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: 'caseId, category, fileName, fileHash, and file are required' });
+    const { caseId, category, title, description, collectedDate, folder = 'Root' } = req.body;
+    
+    // Normalize files: can be multiple in req.files (e.g. from multiple upload mode)
+    if (!caseId || !category || uploadedFiles.length === 0) {
+      uploadedFiles.forEach(f => {
+        try { fs.unlinkSync(f.path); } catch (e) {}
+      });
+      return res.status(400).json({ error: 'caseId, category, and at least one file are required' });
     }
 
     const user = await User.findById(req.user.id);
     if (!user) {
-      if (req.file) fs.unlinkSync(req.file.path);
+      uploadedFiles.forEach(f => {
+        try { fs.unlinkSync(f.path); } catch (e) {}
+      });
       return res.status(401).json({ error: 'User not found' });
     }
 
@@ -36,75 +70,146 @@ router.post('/upload', upload.single('file'), checkCaseAllotment, async (req, re
         'Toxicology Report', 'Ballistics Report', 'Medical Report'
       ];
       if (!forensicCats.includes(category)) {
-        if (req.file) fs.unlinkSync(req.file.path);
+        uploadedFiles.forEach(f => {
+          try { fs.unlinkSync(f.path); } catch (e) {}
+        });
         await logActivity({ user, action: 'ACCESS_DENIED', caseId, details: 'Rule 9: Category not allowed for Position+Role', req });
         return res.status(403).json({ error: 'Forensic users can only upload forensic category evidence' });
       }
     }
 
-    const ivHex = crypto.randomBytes(16).toString('hex');
-    const finalFilePath = path.join('uploads', `${Date.now()}_${ivHex}.enc`);
-    const tempPath = req.file.path;
-
-    const readStream = fs.createReadStream(tempPath);
-    const encryptStream = getEncryptStream(ivHex);
-    const writeStream = fs.createWriteStream(finalFilePath);
-
-    readStream.pipe(encryptStream).pipe(writeStream);
-
-    writeStream.on('finish', async () => {
-      fs.unlinkSync(tempPath);
-
+    // Parse hashes and names if passed as arrays or JSON or single strings
+    let fileHashes = [];
+    if (Array.isArray(req.body.fileHash)) {
+      fileHashes = req.body.fileHash;
+    } else if (req.body.fileHashes) {
       try {
-        const evidence = await Evidence.create({
-          caseId,
-          category,
-          title,
-          description,
-          collectedDate,
-          fileName,
-          fileHash,
-          uploadedBy: req.user.id,
-          filePath: finalFilePath,
-          fileSize: req.file.size,
-          iv: ivHex
-        });
-
-        await logActivity({
-          user,
-          action: 'UPLOAD',
-          caseId,
-          evidenceId: evidence._id,
-          fileName,
-          fileHash,
-          fileSize: req.file.size,
-          req
-        });
-
-        let chainInfo = null;
-        try {
-          chainInfo = await addEvidenceOnChain(caseId, fileHash);
-          if (chainInfo) {
-            evidence.blockchainTxId = chainInfo.txHash;
-            evidence.blockchainEvidenceId = chainInfo.evidenceId;
-            evidence.status = 'verified';
-            await evidence.save();
-          }
-        } catch (chainErr) {
-          console.error('Blockchain commit failed:', chainErr.message);
-        }
-
-        res.status(201).json({ message: 'Evidence recorded and encrypted', evidence, chainInfo });
-      } catch (dbErr) {
-        res.status(500).json({ error: 'Database save failed', details: dbErr.message });
+        fileHashes = JSON.parse(req.body.fileHashes);
+      } catch {
+        fileHashes = [req.body.fileHashes];
       }
-    });
+    } else if (req.body.fileHash) {
+      fileHashes = [req.body.fileHash];
+    }
 
-    writeStream.on('error', (err) => {
-      res.status(500).json({ error: 'File encryption failed', details: err.message });
+    let fileNames = [];
+    if (Array.isArray(req.body.fileName)) {
+      fileNames = req.body.fileName;
+    } else if (req.body.fileNames) {
+      try {
+        fileNames = JSON.parse(req.body.fileNames);
+      } catch {
+        fileNames = [req.body.fileNames];
+      }
+    } else if (req.body.fileName) {
+      fileNames = [req.body.fileName];
+    }
+
+    // Also ensure case folder list contains this folder if it's not 'Root'
+    const targetFolder = (folder || 'Root').trim();
+    if (targetFolder && targetFolder.toLowerCase() !== 'root') {
+      try {
+        const caseDoc = await Case.findOne({ caseId });
+        if (caseDoc) {
+          if (!caseDoc.folders) caseDoc.folders = [];
+          if (!caseDoc.folders.includes(targetFolder)) {
+            caseDoc.folders.push(targetFolder);
+            await caseDoc.save();
+          }
+        }
+      } catch (err) {
+        console.error('Failed to update case folders:', err.message);
+      }
+    }
+
+    const createdEvidences = [];
+    const chainInfos = [];
+
+    // Process each uploaded file
+    for (let i = 0; i < uploadedFiles.length; i++) {
+      const currentFile = uploadedFiles[i];
+      const curFileName = fileNames[i] || currentFile.originalname || currentFile.filename;
+      
+      // If client didn't supply hash for each file, compute sha256 server-side as fallback
+      let curFileHash = fileHashes[i];
+      if (!curFileHash) {
+        const fileBuffer = fs.readFileSync(currentFile.path);
+        curFileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+      }
+
+      // Encrypt file
+      const { finalFilePath, ivHex } = await encryptFileAsync(currentFile.path);
+
+      // Create Evidence record
+      const curTitle = uploadedFiles.length > 1 && title
+        ? `${title} (${i + 1})`
+        : (title || curFileName.split('.').slice(0, -1).join('.') || curFileName);
+
+      const evidence = await Evidence.create({
+        caseId,
+        folder: targetFolder || 'Root',
+        category,
+        title: curTitle,
+        description,
+        collectedDate,
+        fileName: curFileName,
+        fileHash: curFileHash,
+        uploadedBy: req.user.id,
+        filePath: finalFilePath,
+        fileSize: currentFile.size,
+        iv: ivHex
+      });
+
+      await logActivity({
+        user,
+        action: 'UPLOAD',
+        caseId,
+        evidenceId: evidence._id,
+        fileName: curFileName,
+        fileHash: curFileHash,
+        fileSize: currentFile.size,
+        req
+      });
+
+      let chainInfo = null;
+      try {
+        chainInfo = await addEvidenceOnChain(caseId, curFileHash);
+        if (chainInfo) {
+          evidence.blockchainTxId = chainInfo.txHash;
+          evidence.blockchainEvidenceId = chainInfo.evidenceId;
+          evidence.status = 'verified';
+          await evidence.save();
+        }
+      } catch (chainErr) {
+        console.error('Blockchain commit failed for file:', curFileName, chainErr.message);
+      }
+
+      createdEvidences.push(evidence);
+      chainInfos.push(chainInfo);
+    }
+
+    if (createdEvidences.length === 1) {
+      return res.status(201).json({
+        message: 'Evidence recorded and encrypted',
+        evidence: createdEvidences[0],
+        evidences: createdEvidences,
+        chainInfo: chainInfos[0],
+        chainInfos
+      });
+    }
+
+    res.status(201).json({
+      message: `${createdEvidences.length} evidence files recorded and encrypted`,
+      evidence: createdEvidences[0],
+      evidences: createdEvidences,
+      chainInfo: chainInfos[0],
+      chainInfos
     });
 
   } catch (err) {
+    uploadedFiles.forEach(f => {
+      try { fs.unlinkSync(f.path); } catch (e) {}
+    });
     res.status(500).json({ error: 'Upload failed', details: err.message });
   }
 });
@@ -115,14 +220,22 @@ router.get('/', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'User not found' });
 
     let query = {};
-    if (user.position !== 'CBI' && user.position !== 'Judge') {
+    const isOversight = user.position === 'CBI' || user.position === 'Judge' || user.role === 'CBI' || user.role === 'Judge';
+    if (!isOversight) {
       const allottedCases = await Case.find({ allottedTo: user.name });
       const allottedCaseIds = allottedCases.map(c => c.caseId);
       query = { caseId: { $in: allottedCaseIds } };
     }
 
-    const items = await Evidence.find(query).populate('uploadedBy', 'name role position').sort({ createdAt: -1 });
-    res.json(items);
+    const items = await Evidence.find(query).populate('uploadedBy', 'name role position').sort({ createdAt: -1 }).lean();
+    const caseIds = [...new Set(items.map((i) => i.caseId).filter(Boolean))];
+    const caseDocs = await Case.find({ caseId: { $in: caseIds } }, 'caseId name').lean();
+    const caseNameMap = Object.fromEntries(caseDocs.map((c) => [c.caseId, c.name]));
+    const itemsWithCase = items.map((item) => ({
+      ...item,
+      caseName: caseNameMap[item.caseId] || item.caseId || '',
+    }));
+    res.json(itemsWithCase);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch evidence', details: err.message });
   }
@@ -137,7 +250,8 @@ router.get('/:id', async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(401).json({ error: 'User not found' });
 
-    if (user.position !== 'CBI') {
+    const isOversight = user.position === 'CBI' || user.position === 'Judge' || user.role === 'CBI' || user.role === 'Judge';
+    if (!isOversight) {
       const caseDoc = await Case.findOne({ caseId: item.caseId });
       const isAllotted = caseDoc && caseDoc.allottedTo.includes(user.name);
       if (!isAllotted) {
@@ -160,7 +274,8 @@ router.get('/download/:id', async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(401).json({ error: 'User not found' });
 
-    if (user.position !== 'CBI') {
+    const isOversight = user.position === 'CBI' || user.position === 'Judge' || user.role === 'CBI' || user.role === 'Judge';
+    if (!isOversight) {
       const caseDoc = await Case.findOne({ caseId: item.caseId });
       const isAllotted = caseDoc && caseDoc.allottedTo.includes(user.name);
       if (!isAllotted) {
@@ -206,7 +321,8 @@ router.get('/view/:id', async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(401).json({ error: 'User not found' });
 
-    if (user.position !== 'CBI') {
+    const isOversight = user.position === 'CBI' || user.position === 'Judge' || user.role === 'CBI' || user.role === 'Judge';
+    if (!isOversight) {
       const caseDoc = await Case.findOne({ caseId: item.caseId });
       const isAllotted = caseDoc && caseDoc.allottedTo.includes(user.name);
       if (!isAllotted) {

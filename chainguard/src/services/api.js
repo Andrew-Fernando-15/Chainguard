@@ -18,18 +18,51 @@ export async function loginUser({ email, password }) {
 }
 
 // ---- REAL: Evidence (protected, needs a token) ----
-export async function uploadEvidence({ caseId, category, title, description, collectedDate, fileName, fileHash, file }, token) {
+export async function uploadEvidence({ caseId, folder = 'Root', category, title, description, collectedDate, fileName, fileHash, file, files = [] }, token) {
   const formData = new FormData();
   formData.append('caseId', caseId);
+  formData.append('folder', folder || 'Root');
   formData.append('category', category);
   if (title) formData.append('title', title);
   if (description) formData.append('description', description);
   if (collectedDate) formData.append('collectedDate', collectedDate);
-  formData.append('fileName', fileName);
-  formData.append('fileHash', fileHash);
-  formData.append('file', file);
+
+  // If multiple files passed
+  if (files && files.length > 0) {
+    const names = [];
+    const hashes = [];
+    files.forEach((fObj) => {
+      // fObj can be File or { file, hash, name }
+      const actualFile = fObj.file || fObj;
+      const curName = fObj.name || actualFile.name;
+      const curHash = fObj.hash || '';
+      formData.append('files', actualFile);
+      names.push(curName);
+      if (curHash) hashes.push(curHash);
+    });
+    formData.append('fileNames', JSON.stringify(names));
+    if (hashes.length > 0) formData.append('fileHashes', JSON.stringify(hashes));
+  } else if (file) {
+    formData.append('fileName', fileName || file.name);
+    if (fileHash) formData.append('fileHash', fileHash);
+    formData.append('file', file);
+  }
 
   const res = await client.post('/evidence/upload', formData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+
+export async function getCaseFolders(caseId, token) {
+  const res = await client.get(`/cases/${caseId}/folders`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+
+export async function createCaseFolder(caseId, folderName, token) {
+  const res = await client.post(`/cases/${caseId}/folders`, { name: folderName }, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data;
@@ -167,6 +200,21 @@ export async function getAnomalies(token, filters = {}) {
   if (filters.rule) params.append('rule', filters.rule);
 
   const res = await client.get(`/ai/anomalies?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+
+// ---- User & Personnel Management ----
+export async function listUsers(token) {
+  const res = await client.get('/auth/users', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+}
+
+export async function updateCaseLimit(userId, caseLimit, token) {
+  const res = await client.put(`/auth/users/${userId}/case-limit`, { caseLimit }, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data;

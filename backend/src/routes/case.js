@@ -50,11 +50,16 @@ router.post('/', async (req, res) => {
       return res.status(409).json({ error: 'A case with this ID already exists' });
     }
 
-    // Limit of 5 cases per officer (not applied to Judge or CBI)
+    // Configurable case limit per person (set by Judge / CBI; default unlimited if null/0)
     if (user.position !== 'Judge' && user.position !== 'CBI') {
-      const activeCount = await Case.countDocuments({ allottedTo: user.name });
-      if (activeCount >= 5) {
-        return res.status(400).json({ error: 'Officer case limit reached. A maximum of 5 cases can be allotted per officer.' });
+      const userDoc = await User.findById(user._id || user.id);
+      if (userDoc && typeof userDoc.caseLimit === 'number' && userDoc.caseLimit > 0) {
+        const activeCount = await Case.countDocuments({ allottedTo: user.name });
+        if (activeCount >= userDoc.caseLimit) {
+          return res.status(400).json({
+            error: `Case limit reached. Your configured limit is ${userDoc.caseLimit} case(s).`
+          });
+        }
       }
     }
 
@@ -90,6 +95,70 @@ router.get('/:id', checkCaseAllotment, async (req, res) => {
     res.json(caseData);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch case details', details: err.message });
+  }
+});
+
+// GET /api/cases/:caseId/folders
+router.get('/:caseId/folders', checkCaseAllotment, async (req, res) => {
+  try {
+    let caseDoc;
+    if (req.params.caseId.match(/^[0-9a-fA-F]{24}$/)) {
+      caseDoc = await Case.findById(req.params.caseId);
+    } else {
+      caseDoc = await Case.findOne({ caseId: req.params.caseId });
+    }
+
+    if (!caseDoc) {
+      return res.status(404).json({ error: 'Case not found' });
+    }
+
+    // Return list of folders (always includes 'Root' if desired, but caseDoc.folders contains custom folders)
+    const folders = caseDoc.folders || [];
+    res.json(folders);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch folders', details: err.message });
+  }
+});
+
+// POST /api/cases/:caseId/folders
+router.post('/:caseId/folders', checkCaseAllotment, async (req, res) => {
+  try {
+    const { name, folderName } = req.body;
+    const folder = (name || folderName || '').trim();
+
+    if (!folder) {
+      return res.status(400).json({ error: 'Folder name is required' });
+    }
+
+    if (folder.toLowerCase() === 'root') {
+      return res.status(400).json({ error: 'Cannot create folder named "Root"' });
+    }
+
+    let caseDoc;
+    if (req.params.caseId.match(/^[0-9a-fA-F]{24}$/)) {
+      caseDoc = await Case.findById(req.params.caseId);
+    } else {
+      caseDoc = await Case.findOne({ caseId: req.params.caseId });
+    }
+
+    if (!caseDoc) {
+      return res.status(404).json({ error: 'Case not found' });
+    }
+
+    if (!caseDoc.folders) {
+      caseDoc.folders = [];
+    }
+
+    if (caseDoc.folders.includes(folder)) {
+      return res.status(409).json({ error: 'Folder already exists in this case' });
+    }
+
+    caseDoc.folders.push(folder);
+    await caseDoc.save();
+
+    res.status(201).json({ message: 'Folder created successfully', folder, folders: caseDoc.folders });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create folder', details: err.message });
   }
 });
 
@@ -256,16 +325,20 @@ router.put('/:id/assign', async (req, res) => {
       return res.status(404).json({ error: 'Case not found' });
     }
 
-    // Limit of 5 cases per officer (not applied to Judge or CBI)
+    // Check individual case limits set by Judge / CBI (default unlimited if null or 0)
     for (const officerName of allottedTo) {
       const officerUser = await User.findOne({ name: officerName });
       if (officerUser && officerUser.position !== 'Judge' && officerUser.position !== 'CBI') {
-        const count = await Case.countDocuments({
-          _id: { $ne: caseDoc._id },
-          allottedTo: officerName
-        });
-        if (count >= 5) {
-          return res.status(400).json({ error: `Cannot assign case: Officer ${officerName} has already reached the maximum limit of 5 cases.` });
+        if (typeof officerUser.caseLimit === 'number' && officerUser.caseLimit > 0) {
+          const count = await Case.countDocuments({
+            _id: { $ne: caseDoc._id },
+            allottedTo: officerName
+          });
+          if (count >= officerUser.caseLimit) {
+            return res.status(400).json({
+              error: `Cannot assign case: Officer ${officerName} has reached their configured limit of ${officerUser.caseLimit} case(s).`
+            });
+          }
         }
       }
     }

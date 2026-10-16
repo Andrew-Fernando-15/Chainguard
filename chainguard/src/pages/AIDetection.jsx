@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiAlertTriangle, FiCopy, FiClock, FiActivity, FiLoader, FiFilter } from 'react-icons/fi';
+import { FiAlertTriangle, FiCopy, FiClock, FiActivity, FiLoader, FiFilter, FiRefreshCw, FiShield, FiLock } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { getAnomalies } from '../services/api';
 
@@ -16,29 +17,34 @@ function ruleIcon(ruleText) {
 
 
 export default function AIDetection() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const navigate = useNavigate();
+  const isOversightRole = user?.position === 'Judge' || user?.position === 'CBI' || user?.role === 'Judge' || user?.role === 'CBI';
+
   const [anomalies, setAnomalies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ date: '', role: '', rule: '' });
   const [showFilters, setShowFilters] = useState(false);
 
-  const fetchAnomalies = async (f = filters) => {
+  const fetchAnomalies = async (f = filters, isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
       setError('');
       let data = await getAnomalies(token, f);
       
-      // Frontend safety net: deduplicate anomalies grouped by minute
+      // Frontend safety net: deduplicate repeated anomalies
       if (data && data.length > 0) {
         const seen = new Set();
-        data = data.filter(log => {
-          const userId = log.userId?._id || log.userId || '';
+        data = data.filter((log) => {
+          const userId = log.userId?._id || log.userId || log.userName || '';
+          const action = log.action || '';
           const caseId = log.caseId || '';
           const details = log.details || '';
-          const date = new Date(log.createdAt);
-          const minTime = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}`;
-          const key = `${userId}-${caseId}-${details}-${minTime}`;
+          const rules = (log.triggeredRules || []).join(',');
+          const timeBucket = Math.floor(new Date(log.createdAt).getTime() / (5 * 60 * 1000));
+          const key = `${userId}-${action}-${caseId}-${details}-${rules}-${timeBucket}`;
           
           if (seen.has(key)) return false;
           seen.add(key);
@@ -51,12 +57,26 @@ export default function AIDetection() {
       setError(err.response?.data?.error || 'Failed to fetch anomalies');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
+  // Initial fetch and auto-refresh every 8 seconds (Judge & CBI only)
   useEffect(() => {
-    if (token) fetchAnomalies();
-  }, [token]);
+    if (!token || !isOversightRole) return;
+    fetchAnomalies();
+
+    const interval = setInterval(() => {
+      fetchAnomalies(filters, true);
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [token, isOversightRole]);
+
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    fetchAnomalies(filters);
+  };
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
@@ -69,13 +89,68 @@ export default function AIDetection() {
     fetchAnomalies(empty);
   };
 
+  // Role Clearance Guard: Only Judge & CBI can view the AI anomaly detection engine
+  if (!isOversightRole) {
+    return (
+      <div className="mx-auto max-w-4xl px-5 py-24">
+        <div className="glass rounded-3xl border border-rose-500/30 bg-rose-500/5 p-8 sm:p-12 text-center max-w-xl mx-auto shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-inner">
+            <FiLock size={30} />
+          </div>
+          <span className="font-mono text-xs uppercase tracking-widest text-rose-400 font-bold bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
+            Access Restricted • Oversight Clearance Required
+          </span>
+          <h2 className="mt-4 text-2xl font-bold text-frost light:text-navy">
+            Judicial & CBI Clearance Required
+          </h2>
+          <p className="mt-3 text-sm text-frost/70 light:text-navy/70 leading-relaxed">
+            The AI Anomaly Detection & Surveillance Audit engine is restricted exclusively to the 
+            <strong className="text-frost light:text-navy"> Judiciary (Judge)</strong> and 
+            <strong className="text-frost light:text-navy"> Central Bureau of Investigation (CBI)</strong>. 
+            Operational investigating officers are restricted from viewing audit telemetry to maintain chain-of-custody evidentiary integrity.
+          </p>
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="rounded-xl bg-cyan px-6 py-2.5 text-sm font-semibold text-navy hover:bg-cyan/80 transition-colors shadow-lg shadow-cyan/20"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8">
-      <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">Machine Learning</p>
-      <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">AI Anomaly Detection</h1>
-      <p className="mt-1 text-sm text-frost/50 light:text-navy/50">
-        Rule-based checks scan every action in real time. Showing live suspicious activity from the database.
-      </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="font-mono text-xs uppercase tracking-widest text-cyan/70">Machine Learning</p>
+            <span className="flex items-center gap-1 rounded-full bg-cyan/10 border border-cyan/20 px-2 py-0.5 text-[10px] text-cyan font-mono">
+              <FiShield className="text-[11px]" /> Immutable Audit Trail
+            </span>
+          </div>
+          <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">AI Anomaly Detection</h1>
+          <p className="mt-1 text-sm text-frost/50 light:text-navy/50">
+            Real-time rule engine & heuristic audit log monitor. Anomalies are permanently recorded and cannot be altered or cancelled.
+          </p>
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 px-3.5 py-2 text-xs font-medium text-frost/80 light:text-navy/80 hover:bg-white/10 transition-colors"
+          >
+            <FiRefreshCw className={refreshing ? 'animate-spin text-cyan' : ''} />
+            Refresh Logs
+          </button>
+        </div>
+      </div>
 
       {/* Filter Toggle */}
       <div className="mt-6 flex items-center gap-3">
@@ -199,8 +274,8 @@ export default function AIDetection() {
                   {log.caseId && (
                     <p className="text-xs text-frost/50 light:text-navy/50 truncate mb-2">
                       Case: <span className="font-mono text-cyan/60">{log.caseId}</span>
-                      {log.evidenceId?.fileName && (
-                        <> <span className="mx-1.5 opacity-30">•</span> File: <span className="text-frost/70 light:text-navy/70">{log.evidenceId.fileName}</span></>
+                      {(log.fileName || log.evidenceId?.fileName) && (
+                        <> <span className="mx-1.5 opacity-30">•</span> File: <span className="text-frost/70 light:text-navy/70">{log.fileName || log.evidenceId?.fileName}</span></>
                       )}
                     </p>
                   )}

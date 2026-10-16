@@ -29,7 +29,13 @@ async function seed() {
       { caseId: 'CASE-10236', name: 'Digital Forgery Case', status: 'Active', allottedTo: ['Rahul Sharma'] },
       { caseId: 'CASE-10237', name: 'Bank Robbery Evidence', status: 'Closed', allottedTo: ['Aisha Khan'] },
       { caseId: 'CASE-10238', name: 'Insider Trading Suspicion', status: 'Pending', allottedTo: ['Priya Nair'] },
-      { caseId: 'CASE-10239', name: 'Murder at MG Road', status: 'Active', allottedTo: ['Rahul Sharma', 'Aisha Khan'] },
+      { 
+        caseId: 'CASE-10239', 
+        name: 'Murder at MG Road', 
+        status: 'Active', 
+        allottedTo: ['Rahul Sharma', 'Aisha Khan'],
+        folders: ['Crime_Scene', 'Forensic_Reports', 'Statements']
+      },
       { caseId: 'CASE-10240', name: 'Smuggling Operations Ring', status: 'Active', allottedTo: ['Priya Nair'] },
       { caseId: 'CASE-10241', name: 'Kidnapping Ransom', status: 'Closed', allottedTo: [] },
       { caseId: 'CASE-10242', name: 'Illegal Weapons Cache', status: 'Pending', allottedTo: [] },

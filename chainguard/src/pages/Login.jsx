@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiShield, FiMail, FiLock, FiUser } from 'react-icons/fi';
+import { FiShield, FiMail, FiLock, FiUser, FiCheckCircle } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { loginUser, registerUser } from '../services/api';
@@ -10,10 +10,41 @@ export default function Login() {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [form, setForm] = useState({ name: '', email: '', password: '', position: 'Police', role: 'Investigating Officer' });
   const [submitting, setSubmitting] = useState(false);
+  const [authorizedPersonnel, setAuthorizedPersonnel] = useState([]);
 
   const { login } = useAuth();
   const { pushToast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/authorized-credentials`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setAuthorizedPersonnel(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const matched = useMemo(() => {
+    const q = (form.name || '').trim().toLowerCase();
+    if (!q) return null;
+    return authorizedPersonnel.find((p) => p.name.toLowerCase() === q) || null;
+  }, [form.name, authorizedPersonnel]);
+
+  function handleNameChange(e) {
+    const val = e.target.value;
+    const match = authorizedPersonnel.find((p) => p.name.toLowerCase().trim() === val.toLowerCase().trim());
+    if (match) {
+      setForm((f) => ({
+        ...f,
+        name: match.name,
+        position: match.position,
+        role: match.role,
+      }));
+    } else {
+      setForm((f) => ({ ...f, name: val }));
+    }
+  }
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -61,7 +92,7 @@ export default function Login() {
               {mode === 'login' ? 'Sign in to ChainGuard' : 'Create an account'}
             </h1>
             <p className="text-xs text-frost/50 light:text-navy/50">
-              {mode === 'login' ? 'Access the evidence dashboard' : 'Register as an investigator'}
+              {mode === 'login' ? 'Access the evidence dashboard' : 'Register with your authorized credential name'}
             </p>
           </div>
         </div>
@@ -69,18 +100,43 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4" autoComplete="off">
           {mode === 'register' && (
             <>
-              <div className="relative">
-                <FiUser className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder="Full name"
-                  required
-                  autoComplete="off"
-                  data-lpignore="true"
-                  className="w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 light:text-navy/30 focus:border-cyan/50"
-                />
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <FiUser className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-frost/40 light:text-navy/40" />
+                  <input
+                    list="authorized-names"
+                    name="name"
+                    value={form.name}
+                    onChange={handleNameChange}
+                    placeholder="Full name (e.g. Neha Kapoor)"
+                    required
+                    autoComplete="off"
+                    data-lpignore="true"
+                    className="w-full rounded-lg border border-white/10 light:border-navy/10 bg-white/5 light:bg-navy/5 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-frost/30 light:text-navy/30 focus:border-cyan/50"
+                  />
+                  <datalist id="authorized-names">
+                    {authorizedPersonnel.map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.position} — {p.role} ({p.employeeId})
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
+
+                {matched ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-mono"
+                  >
+                    <FiCheckCircle className="shrink-0 text-emerald-400" />
+                    <span>Authorized: {matched.position} • {matched.role} ({matched.employeeId})</span>
+                  </motion.div>
+                ) : (
+                  <p className="text-[11px] text-frost/40 light:text-navy/40 px-1">
+                    Enter any name listed in official credential records.
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-2">

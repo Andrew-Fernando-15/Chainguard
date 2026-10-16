@@ -15,6 +15,15 @@ const userSchema = new mongoose.Schema(
       enum: ['Investigating Officer', 'Normal Officer', 'Judge', 'CBI', 'N/A', 'Forensic Expert', 'CBI Officer'],
       default: 'N/A',
     },
+    caseLimit: {
+      type: Number,
+      default: null, // null means unlimited, or positive integer limit set by Judge / CBI
+    },
+    employeeId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   { timestamps: true }
 );

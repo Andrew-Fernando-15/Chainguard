@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const evidenceSchema = new mongoose.Schema(
   {
     caseId: { type: String, required: true, trim: true, index: true },
+    folder: { type: String, default: 'Root', trim: true },
     category: { type: String, required: true },
     title: { type: String },
     description: { type: String },

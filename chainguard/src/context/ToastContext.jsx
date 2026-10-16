@@ -14,11 +14,15 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
   const pushToast = useCallback((text, type = 'info') => {
-    const id = Date.now() + Math.random();
-    setToasts((t) => [...t, { id, text, type }]);
-    setTimeout(() => {
-      setToasts((t) => t.filter((toast) => toast.id !== id));
-    }, 3500);
+    setToasts((t) => {
+      // Don't show duplicate toast if already showing identical message
+      if (t.some((toast) => toast.text === text)) return t;
+      const id = Date.now() + Math.random();
+      setTimeout(() => {
+        setToasts((curr) => curr.filter((toast) => toast.id !== id));
+      }, 3500);
+      return [...t, { id, text, type }];
+    });
   }, []);
 
   return (

@@ -12,6 +12,9 @@ const caseSchema = new mongoose.Schema(
     allottedTo: [
       { type: String, trim: true, index: true }
     ],
+    folders: [
+      { type: String, trim: true }
+    ],
   },
   { timestamps: true }
 );
